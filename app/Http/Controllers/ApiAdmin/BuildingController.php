@@ -8,6 +8,7 @@ use App\Services\ApiAdmin\BuildingService;
 use App\Http\Requests\GetListBuildingRequest;
 use App\Http\Requests\CreateBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
+use App\Helper\Response;
 
 class BuildingController extends Controller
 {
@@ -18,30 +19,41 @@ class BuildingController extends Controller
 
     public function getListBuilding(GetListBuildingRequest $request)
     {
-        $buildings = $this->buildingService->getListBuilding($request->all());
-        return response()->json(['message' => $buildings]);
+        try {
+            $buildings = $this->buildingService->getListBuilding($request->all());
+            return Response::data(['data' => $buildings]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+        }
     }
 
     public function create(CreateBuildingRequest $request)
     {
-        $create = $this->buildingService->createBuilding($request->all());
-        return response()->json(['message' => $create]);
+        try {
+            $create = $this->buildingService->createBuilding($request->all());
+            return Response::data(['data' => $create]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+        }
     }
 
     public function edit(int $id)
     {
-        $building = $this->buildingService->getBuildingByID($id);
-        return response()->json(['message' => $building]);
+        try {
+            $building = $this->buildingService->getBuildingByID($id);
+            return Response::data(['data' => $building]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+        }
     }
 
     public function update(int $id, UpdateBuildingRequest $request)
     {
-        $update = $this->buildingService->updateBuilding($id, $request->all());
-        return response()->json(['message' => $update]); 
-    }
-
-    public function show($id)
-    {
-        // Return a specific resource
+        try {
+            $update = $this->buildingService->updateBuilding($id, $request->all());
+            return Response::data(['data' => $update]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+        }
     }
 }

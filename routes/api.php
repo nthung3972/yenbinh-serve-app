@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiAdmin\BuildingController;
+use App\Http\Controllers\ApiAdmin\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,19 +21,22 @@ use App\Http\Controllers\ApiAdmin\BuildingController;
 // });
 
 Route::group(['prefix' => 'admin'], function () {
-    // Route::group(['prefix' => 'auth'], function () {
-    //     Route::post('login', 'ApiAdmin\AuthController@login');
-    //     Route::post('forgot-password', 'ApiAdmin\AuthController@sendEmailPasswordReset');
-    //     Route::post('reset-password', 'ApiAdmin\AuthController@resetPassword');
-    //     Route::get('verify', 'ApiAdmin\AuthController@verify');
-    //     Route::post('check-token','ApiAdmin\AuthController@checkToken');
-    // });
+    Route::group(['prefix' => 'auth'], function () {
+        Route::post('login', [AuthController::class, 'login']);
+        // Route::post('forgot-password', 'ApiAdmin\AuthController@sendEmailPasswordReset');
+        // Route::post('reset-password', 'ApiAdmin\AuthController@resetPassword');
+        // Route::get('verify', 'ApiAdmin\AuthController@verify');
+        // Route::post('check-token','ApiAdmin\AuthController@checkToken');
+        // Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
+    });
 
-    //building
-    Route::group(['prefix' => 'building'], function () {
-        Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
-        Route::post('/create-building', [BuildingController::class, 'create']);
-        Route::get('/edit/{id}', [BuildingController::class, 'edit']);
-        Route::put('/update/{id}', [BuildingController::class, 'update']);
+    Route::group(['middleware' => 'auth_admin'], function () {
+        //building
+        Route::group(['prefix' => 'building'], function () {
+            Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
+            Route::post('/create-building', [BuildingController::class, 'create']);
+            Route::get('/edit/{id}', [BuildingController::class, 'edit']);
+            Route::put('/update/{id}', [BuildingController::class, 'update']);
+        });
     });
 });
