@@ -21,13 +21,10 @@ use App\Http\Controllers\ApiAdmin\AuthController;
 // });
 
 Route::group(['prefix' => 'admin'], function () {
+    Route::get('/buildings', [BuildingController::class, 'test']);
+
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
-        // Route::post('forgot-password', 'ApiAdmin\AuthController@sendEmailPasswordReset');
-        // Route::post('reset-password', 'ApiAdmin\AuthController@resetPassword');
-        // Route::get('verify', 'ApiAdmin\AuthController@verify');
-        // Route::post('check-token','ApiAdmin\AuthController@checkToken');
-        // Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
     });
 
     Route::group(['middleware' => 'auth_admin'], function () {

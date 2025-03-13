@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\ApiAdmin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\ApiAdmin\UserService;
+use App\Http\Requests\UserLoginRequest;
 use App\Helper\Response;
 
 class AuthController extends Controller
@@ -15,7 +15,7 @@ class AuthController extends Controller
     ) {
     }
 
-    public function login(Request $request)
+    public function login(UserLoginRequest $request)
     {   
         try {
             $login = $this->userService->loginWeb($request->only('email', 'password'));
