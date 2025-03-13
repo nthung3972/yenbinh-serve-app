@@ -9,12 +9,18 @@ use App\Http\Requests\GetListBuildingRequest;
 use App\Http\Requests\CreateBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
 use App\Helper\Response;
+use App\Models\Building;
 
 class BuildingController extends Controller
 {
     public function __construct(
         public BuildingService $buildingService,
     ) {
+    }
+
+    public function test (Request $request) {
+        $data = Building::all();
+        return Response::data(['data' => $data]);
     }
 
     public function getListBuilding(GetListBuildingRequest $request)
