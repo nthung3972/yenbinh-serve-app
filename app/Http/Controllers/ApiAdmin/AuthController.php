@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\ApiAdmin\UserService;
 use App\Http\Requests\UserLoginRequest;
 use App\Helper\Response;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -25,10 +27,24 @@ class AuthController extends Controller
             $userInfo = [
                 'name' => auth('api')->user()->name,
                 'email' => auth('api')->user()->email,
+                'role' => auth('api')->user()->role,
             ];
             return Response::data(['token' => $login['token'], 'user' => $userInfo]);
         }catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function logout()
+    {
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken()); // Vô hiệu hóa token
+
+            // return Response::data(['token' => $login['token'], 'user' => $userInfo]);
+
+            return response()->json(['message' => 'Logged out successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong'], 500);
         }
     }
 }

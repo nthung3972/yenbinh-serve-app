@@ -28,6 +28,10 @@ Route::group(['prefix' => 'admin'], function () {
     });
 
     Route::group(['middleware' => 'auth_admin'], function () {
+        Route::group(['prefix' => 'me'], function () {
+            Route::post('/logout', [AuthController::class, 'logout']);
+        });
+
         //building
         Route::group(['prefix' => 'building'], function () {
             Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
