@@ -21,13 +21,11 @@ use App\Http\Controllers\ApiAdmin\AuthController;
 // });
 
 Route::group(['prefix' => 'admin'], function () {
-    Route::get('/buildings', [BuildingController::class, 'test']);
-
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
     });
 
-    Route::group(['middleware' => 'auth_admin'], function () {
+    Route::group(['middleware' => 'auth_admin', 'cors'], function () {
         Route::group(['prefix' => 'me'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
