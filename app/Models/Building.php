@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Building extends Model
 {
@@ -14,11 +16,22 @@ class Building extends Model
     protected $primaryKey = 'building_id';
 
     protected $fillable = [
-        'building_id',
         'name',
         'address',
         'image',
         'floors',
+        'status',
         'manager_id'
     ];
+
+    // Một tòa nhà có nhiều căn hộ
+    public function apartments(): HasMany
+    {
+        return $this->hasMany(Apartment::class, 'building_id', 'building_id');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'building_id', 'building_id');
+    }
 }

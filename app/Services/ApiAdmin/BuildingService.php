@@ -16,6 +16,11 @@ class BuildingService
     ) {
     }
 
+    public function overview($request)
+    {
+        return $this->buildingRepository->overview($request);
+    }
+
     public function getListBuilding(array $request)
     {
         return $this->buildingRepository->getListBuilding($request);
