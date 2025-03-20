@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiAdmin\BuildingController;
 use App\Http\Controllers\ApiAdmin\AuthController;
+use App\Http\Controllers\ApiAdmin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,12 +31,18 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
 
+        Route::group(['prefix' => 'dashboard'], function () {
+            Route::get('/collection-rate', [DashboardController::class, 'getCollectionRateByYear']);
+        });
+
         //building
         Route::group(['prefix' => 'building'], function () {
+            Route::get('/overview', [BuildingController::class, 'overview']);
             Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
             Route::post('/create-building', [BuildingController::class, 'create']);
             Route::get('/edit/{id}', [BuildingController::class, 'edit']);
             Route::put('/update/{id}', [BuildingController::class, 'update']);
         });
+        
     });
 });

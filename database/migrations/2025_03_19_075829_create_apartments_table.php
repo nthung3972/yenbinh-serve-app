@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('apartments', function (Blueprint $table) {
             $table->increments('apartment_id');
-            $table->string('number', 10);
-            $table->integer('floor');
+            $table->integer('building_id');
+            $table->string('apartment_number', 20);
+            $table->integer('floor_number');
             $table->float('area');
             $table->boolean('status')->default('0')->comment('0 = đang sử dụng, 1 = để trống');
-            $table->integer('building_id');
-            $table->integer('resident_id');
             $table->timestamps();
         });
     }

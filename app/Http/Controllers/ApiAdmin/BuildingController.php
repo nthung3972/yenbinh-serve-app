@@ -15,12 +15,16 @@ class BuildingController extends Controller
 {
     public function __construct(
         public BuildingService $buildingService,
-    ) {
-    }
+    ) {}
 
-    public function test (Request $request) {
-        $data = Building::all();
-        return Response::data(['data' => $data]);
+    public function overview(Request $request)
+    {   
+        try {
+            $buildings = $this->buildingService->overview($request);
+            return Response::data(['data' => $buildings]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
     }
 
     public function getListBuilding(GetListBuildingRequest $request)
@@ -29,7 +33,7 @@ class BuildingController extends Controller
             $buildings = $this->buildingService->getListBuilding($request->all());
             return Response::data(['data' => $buildings]);
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 
@@ -39,7 +43,7 @@ class BuildingController extends Controller
             $create = $this->buildingService->createBuilding($request->all());
             return Response::data(['data' => $create]);
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 
@@ -49,7 +53,7 @@ class BuildingController extends Controller
             $building = $this->buildingService->getBuildingByID($id);
             return Response::data(['data' => $building]);
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 
@@ -59,7 +63,7 @@ class BuildingController extends Controller
             $update = $this->buildingService->updateBuilding($id, $request->all());
             return Response::data(['data' => $update]);
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error'=>[$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 }
