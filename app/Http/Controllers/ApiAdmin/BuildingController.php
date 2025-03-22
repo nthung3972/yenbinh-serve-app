@@ -17,16 +17,6 @@ class BuildingController extends Controller
         public BuildingService $buildingService,
     ) {}
 
-    public function overview(Request $request)
-    {   
-        try {
-            $buildings = $this->buildingService->overview($request);
-            return Response::data(['data' => $buildings]);
-        } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
-        }
-    }
-
     public function getListBuilding(GetListBuildingRequest $request)
     {
         try {
