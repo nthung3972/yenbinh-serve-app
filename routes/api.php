@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiAdmin\BuildingController;
 use App\Http\Controllers\ApiAdmin\AuthController;
 use App\Http\Controllers\ApiAdmin\DashboardController;
+use App\Http\Controllers\ApiAdmin\ApartmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,15 +34,21 @@ Route::group(['prefix' => 'admin'], function () {
 
         Route::group(['prefix' => 'dashboard'], function () {
             Route::get('/collection-rate', [DashboardController::class, 'getCollectionRateByYear']);
+            Route::get('/stats/{id}', [DashboardController::class, 'statsBuildingById']);
+            Route::get('/overview', [DashboardController::class, 'overview']);
         });
 
         //building
         Route::group(['prefix' => 'building'], function () {
-            Route::get('/overview', [BuildingController::class, 'overview']);
             Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
             Route::post('/create-building', [BuildingController::class, 'create']);
             Route::get('/edit/{id}', [BuildingController::class, 'edit']);
             Route::put('/update/{id}', [BuildingController::class, 'update']);
+        });
+
+        //apartment
+        Route::group(['prefix' => 'apartment'], function () {
+            Route::get('/list-by-building/{id}', [ApartmentController::class, 'getListByBuilding']);
         });
         
     });

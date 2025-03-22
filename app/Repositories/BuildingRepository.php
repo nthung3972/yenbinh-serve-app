@@ -93,4 +93,20 @@ class BuildingRepository
     {
         return Building::where('building_id', $id)->update($request);
     }
+
+    public function statsBuildingById(int $id)
+    {
+        $buildings = Building::withCount('apartments')
+            ->withCount([
+                'apartments as occupied_apartments_count' => function ($query) {
+                    $query->where('status', 0);
+                }
+            ])
+            ->withCount(['apartments as residents_count' => function ($query) {
+                $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+            }])
+            ->where('building_id', $id)
+            ->get();
+            return $buildings;
+    }
 }

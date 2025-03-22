@@ -6,8 +6,25 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Invoice;
 use Carbon\Carbon;
+use App\Services\ApiAdmin\BuildingService;
+use App\Helper\Response;
+
 class DashboardController extends Controller
 {
+    public function __construct(
+        public BuildingService $buildingService,
+    ) {}
+
+    public function overview(Request $request)
+    {   
+        try {
+            $buildings = $this->buildingService->overview($request);
+            return Response::data(['data' => $buildings]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
     public function getCollectionRateByYear(Request $request)
     {
         $year = $request->input('year', Carbon::now()->year); // Mặc định là năm hiện tại
@@ -29,5 +46,15 @@ class DashboardController extends Controller
         });
 
         return response()->json($chartData);
+    }
+
+    public function statsBuildingById($id)
+    {
+        try {
+            $building = $this->buildingService->statsBuildingById($id);
+            return Response::data(['data' => $building]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
     }
 }

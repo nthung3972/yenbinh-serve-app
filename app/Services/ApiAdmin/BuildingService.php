@@ -40,4 +40,9 @@ class BuildingService
     {
         return $this->buildingRepository->updateBuilding($id, $request);
     }
+
+    public function statsBuildingById(int $id)
+    {
+        return $this->buildingRepository->statsBuildingById($id);
+    }
 }
