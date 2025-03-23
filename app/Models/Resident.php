@@ -14,6 +14,7 @@ class Resident extends Model
     protected $primaryKey = 'resident_id';
 
     protected $fillable = [
+        'resident_id',
         'full_name',
         'date_of_birth',
         'phone_number',

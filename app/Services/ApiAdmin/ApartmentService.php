@@ -11,8 +11,22 @@ class ApartmentService
     ) {
     }
 
-    public function getListByBuilding(int $id)
+    public function getListByBuilding(int $id, $request)
     {
-        return $this->apartmentRepository->getListByBuilding($id);
+        return $this->apartmentRepository->getListByBuilding(
+            $id, 
+            $request->per_page ?? config('constant.paginate'),
+            $request->keyword
+        );
+    }
+
+    public function create(array $request)
+    {
+        return $this->apartmentRepository->create($request);
+    }
+
+    public function addMultipleResidents(array $request, int $id)
+    {
+        return $this->apartmentRepository->addMultipleResidents($request, $id);
     }
 }

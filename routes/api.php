@@ -49,6 +49,8 @@ Route::group(['prefix' => 'admin'], function () {
         //apartment
         Route::group(['prefix' => 'apartment'], function () {
             Route::get('/list-by-building/{id}', [ApartmentController::class, 'getListByBuilding']);
+            Route::post('/create', [ApartmentController::class, 'create']);
+            Route::post('/apartment/{id}/add-multiple-residents', [ApartmentController::class, 'addMultipleResidents']);
         });
         
     });
