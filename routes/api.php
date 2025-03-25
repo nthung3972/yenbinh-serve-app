@@ -6,6 +6,7 @@ use App\Http\Controllers\ApiAdmin\BuildingController;
 use App\Http\Controllers\ApiAdmin\AuthController;
 use App\Http\Controllers\ApiAdmin\DashboardController;
 use App\Http\Controllers\ApiAdmin\ApartmentController;
+use App\Http\Controllers\ApiAdmin\ResidentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,13 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/apartment/{id}/add-multiple-residents', [ApartmentController::class, 'addMultipleResidents']);
             Route::get('/apartment/{id}/edit', [ApartmentController::class, 'edit']);
             Route::post('/apartment/{id}/update', [ApartmentController::class, 'update']);
+        });
+
+        //resident
+        Route::group(['prefix' => 'resident'], function () {
+            Route::get('/resident-list/{id}', [ResidentController::class, 'getListResident']);
+            Route::post('/create', [ResidentController::class, 'create']);
+            Route::get('/resident/{id}/edit', [ResidentController::class, 'edit']);
         });
         
     });
