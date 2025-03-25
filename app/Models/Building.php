@@ -34,4 +34,26 @@ class Building extends Model
     {
         return $this->hasMany(Invoice::class, 'building_id', 'building_id');
     }
+
+    public function getAllResidents()
+    {
+        return $this->apartments()
+            ->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id')
+            ->join('residents', 'apartment_resident.resident_id', '=', 'residents.resident_id')
+            ->select('residents.*', 'apartments.apartment_number')
+            ->get();
+    }
+
+    public function residents()
+    {
+        return $this->hasManyThrough(
+            Resident::class,
+            Apartment::class,
+            'building_id', // Khóa ngoại trong bảng apartments trỏ tới buildings
+            'resident_id', // Khóa chính trong bảng residents
+            'building_id', // Khóa chính trong bảng buildings
+            'apartment_id' // Khóa chính trong bảng apartments
+        )->join('apartment_resident', 'resident.resident_id', '=', 'apartment_resident.resident_id')
+         ->select('residents.*');
+    }
 }
