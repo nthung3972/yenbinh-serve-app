@@ -23,7 +23,6 @@ class ApartmentRepository
 
     public function create(array $request)
     {
-
         $apartment = Apartment::create($request);
         return $apartment;
     }
@@ -46,5 +45,18 @@ class ApartmentRepository
             'message' => 'Đã thêm tất cả cư dân thành công',
             'residents' => $createdResidents
         ], 201);
+    }
+
+    public function getApartmentDetail(int $id)
+    {
+        $apartment = Apartment::where('apartment_id', $id)
+            ->with('residents')->get();
+        return $apartment;
+    }
+
+    public function update(array $request, int $id)
+    {
+        $update = Apartment::where('apartment_id', $id)->update($request);
+        return $update;
     }
 }

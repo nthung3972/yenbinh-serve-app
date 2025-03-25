@@ -14,10 +14,10 @@ class ApartmentResident extends Model
     protected $fillable = [
         'apartment_id',
         'resident_id',
-        'relationship',
-        'move_in_date',
-        'move_out_date',
-        'is_primary_resident'
+        'role_in_apartment',
+        'registration_date',
+        'registration_status',
+        'notes'
     ];
 
     public function apartment()

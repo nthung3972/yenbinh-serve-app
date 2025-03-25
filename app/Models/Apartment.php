@@ -18,7 +18,8 @@ class Apartment extends Model
         'floor_number',
         'area',
         'status',
-        'building_id'
+        'building_id',
+        'ownership_type'
     ];
 
     public function residents()
