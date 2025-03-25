@@ -14,13 +14,15 @@ class Resident extends Model
     protected $primaryKey = 'resident_id';
 
     protected $fillable = [
-        'resident_id',
         'full_name',
+        'id_card_number',
         'date_of_birth',
+        'gender',
         'phone_number',
         'email',
-        'registration_date',
-        'is_owner'
+        'move_in_date',
+        'move_out_date',
+        'resident_type'
     ];
 
     public function apartments()

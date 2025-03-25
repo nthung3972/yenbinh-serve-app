@@ -29,4 +29,16 @@ class ApartmentService
     {
         return $this->apartmentRepository->addMultipleResidents($request, $id);
     }
+
+    public function getApartmentDetail(int $id)
+    {
+        return $this->apartmentRepository->getApartmentDetail($id);
+    }
+
+    public function update(array $request, int $id)
+    {
+        return $this->apartmentRepository->update($request, $id);
+    }
+
+
 }

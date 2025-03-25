@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('apartment_resident', function (Blueprint $table) {
             $table->integer('apartment_id');
             $table->integer('resident_id');
-            $table->string('relationship', 100);
-            $table->date('move_in_date');
-            $table->date('move_out_date');
-            $table->boolean('is_primary_resident')->default('0')->comment('0 = không phải chủ sở hữu, 1 = chủ sở hữu');
+            $table->boolean('role_in_apartment')->default('0')->comment('0 = chủ hộ, 1 = người thuê chính, 2 = người thân');
+            $table->date('registration_date');
+            $table->boolean('registration_status')->default('0')->comment('0 = đang cư trú, 1 = đã rời đi');
+            $table->string('notes', 255)->nullable();
             $table->timestamps();
         });
     }

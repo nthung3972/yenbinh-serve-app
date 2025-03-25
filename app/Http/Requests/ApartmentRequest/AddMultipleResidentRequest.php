@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\ApartmentRequest;
 
+use App\Models\ApartmentResident;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AddMultipleResidentRequest extends FormRequest
@@ -22,23 +23,48 @@ class AddMultipleResidentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'residents' => 'required|array|min:1',
-            'residents.*.full_name' => 'required|string|max:255',
-            'residents.*.date_of_birth' => 'required|date',
-            'residents.*.phone_number' => 'required|string|max:20',
-            'residents.*.email' => 'nullable|email|max:255',
-            'residents.*.registration_date' => 'required|date',
+            '*.apartment_id' => 'required|exists:apartments,apartment_id',
+            '*.full_name' => 'required|string|max:255',
+            '*.id_card_number' => 'string|max:255',
+            '*.date_of_birth' => 'required|date',
+            '*.gender' => 'required',
+            '*.phone_number' => 'required|string|max:20',
+            '*.email' => 'required|email|max:255',
+            '*.move_in_date' => 'required|date',
+            '*.resident_type' => 'required',
+            '*.registration_date' => 'required|date',
+            '*.registration_status' => 'required',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $residents = collect($this->all());
+
+            // Nếu cần bắt buộc chỉ có 1 chủ hộ, bỏ comment dòng dưới
+            if ($residents->where('resident_type', 0)->count() > 1) {
+                $validator->errors()->add('general.resident_type', 'Chỉ có thể có một chủ hộ trong căn hộ.');
+            }
+
+            if ($residents->contains('resident_type', 0)) {
+                $apartmentIds = collect($this->input())->pluck('apartment_id')->unique();
+
+                $ownerCount = ApartmentResident::whereIn('apartment_id', $apartmentIds)
+                    ->where('role_in_apartment', 0)
+                    ->count();
+
+                if ($ownerCount > 0) {
+                    $validator->errors()->add('general.resident_type', 'Căn hộ này đã có chủ hộ.');
+                }
+            }
+        });
     }
 
     public function messages()
     {
         return [
-            'residents.required' => 'Danh sách cư dân không được để trống.',
-            'residents.*.full_name.required' => 'Vui lòng nhập họ và tên cho từng cư dân.',
-            'residents.*.date_of_birth.required' => 'Vui lòng nhập ngày sinh cho từng cư dân.',
-            'residents.*.phone_number.required' => 'Vui lòng nhập số điện thoại cho từng cư dân.',
-            'residents.*.registration_date.required' => 'Vui lòng nhập ngày đăng ký cho từng cư dân.',
+            '*.full_name.required' => 'Vui lòng nhập họ và tên cho từng cư dân.',
         ];
     }
 }
