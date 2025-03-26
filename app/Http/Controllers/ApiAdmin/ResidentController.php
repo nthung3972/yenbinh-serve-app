@@ -9,9 +9,10 @@ use App\Services\ApiAdmin\ResidentService;
 use App\Helper\Response;
 use App\Models\Apartment;
 use Illuminate\Http\Request;
-use App\Http\Requests\ApartmentRequest\AddMultipleResidentRequest;
+use App\Http\Requests\ResidentRequest\CreateResidentRequest;
 use Illuminate\Support\Carbon;
 use App\Models\Building;
+use Illuminate\Support\Facades\DB;
 
 class ResidentController extends Controller
 {
@@ -29,12 +30,15 @@ class ResidentController extends Controller
         }
     }
 
-    public function create(Request $request)
+    public function create(CreateResidentRequest $request)
     {
         try {
+            DB::beginTransaction();
             $resident = $this->residentService->create($request->all());
+            DB::commit();
             return Response::data(['data' => $resident]);
         } catch (\Throwable $th) {
+            DB::rollback();
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }

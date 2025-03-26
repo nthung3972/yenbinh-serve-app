@@ -7,6 +7,7 @@ use App\Models\Resident;
 use App\Models\ApartmentResident;
 use Carbon\Carbon;
 
+
 class ApartmentRepository
 {
     public function getListByBuilding($id, $perPage = '', $keyword = null)
@@ -49,8 +50,7 @@ class ApartmentRepository
 
     public function getApartmentDetail(int $id)
     {
-        $apartment = Apartment::where('apartment_id', $id)
-            ->with('residents')->get();
+        $apartment = Apartment::where('apartment_id', $id)->get();
         return $apartment;
     }
 
