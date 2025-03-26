@@ -31,9 +31,6 @@ class CreateResidentRequest extends FormRequest
             'gender' => 'required|string|max:255',
             'phone_number' => 'nullable|string|max:20',
             'email' => 'required|unique:residents,email',
-            'move_in_date' => 'required|date',
-            'registration_date' => 'required|date',
-            'registration_status' => 'required',
 
             // Kiểm tra căn hộ
             'apartments' => [

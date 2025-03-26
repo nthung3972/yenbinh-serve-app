@@ -48,10 +48,10 @@ class ApartmentController extends Controller
         }
     }
 
-    public function update(UpdateApartmentStatusRequest $request, $id)
+    public function update(Request $request, $id)
     {
         try {
-            $update = $this->apartmentService->update($request->all(), $id);
+            $update = $this->apartmentService->update($request->only(['apartment_number', 'area', 'building_id', 'floor_number', 'ownership_type']), $id);
             return Response::data(['data' => $update]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());

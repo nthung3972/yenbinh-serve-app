@@ -17,7 +17,6 @@ class Apartment extends Model
         'apartment_number',
         'floor_number',
         'area',
-        'status',
         'building_id',
         'ownership_type'
     ];
