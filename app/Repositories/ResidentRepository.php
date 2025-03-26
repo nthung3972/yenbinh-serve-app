@@ -27,9 +27,11 @@ class ResidentRepository
     public function create(array $request)
     {   
         $resident = Resident::create($request);
-        $registrationDate = $request['registration_date'];
-        $registrationStatus = $request['registration_status'];
+
+        $registrationDate =  Carbon::now();
+        $registrationStatus = 0;
         $residentId = $resident->resident_id;
+        
         if($resident && $residentId) {
             foreach ($request['apartments'] as $residentData) {
                 $apartment = Apartment::where('apartment_number', $residentData['apartment_number'])->first();
