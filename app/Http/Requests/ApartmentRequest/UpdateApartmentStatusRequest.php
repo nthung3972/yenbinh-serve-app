@@ -31,8 +31,8 @@ class UpdateApartmentStatusRequest extends FormRequest
             'area' => 'required',
             'floor_number' => 'required',
             'ownership_type' => 'required',
-            'area' => 'required',
-            'status' => ['required', 'integer', 'in:0,1,2'],
+            'status' => 'required',
+            // 'status' => ['required', 'integer', 'in:0,1,2'],
         ];
     }
 
