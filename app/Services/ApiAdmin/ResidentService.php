@@ -29,4 +29,19 @@ class ResidentService
     {
         return $this->residentRepository->edit($id);
     }
+
+    public function update(array $request, int $id)
+    {
+        return $this->residentRepository->update($request, $id);
+    }
+
+    public function addResidentToApartment(array $request, int $id)
+    {
+        return $this->residentRepository->addResidentToApartment($request, $id);
+    }
+
+    public function deleteResidentToApartment(array $request, int $id)
+    {
+        return $this->residentRepository->deleteResidentToApartment($request, $id);
+    }
 }

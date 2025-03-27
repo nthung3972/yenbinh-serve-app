@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\Apartment;
 use App\Models\Resident;
-use App\Models\Building;
 use App\Models\ApartmentResident;
 use Carbon\Carbon;
 
@@ -25,14 +24,14 @@ class ResidentRepository
     }
 
     public function create(array $request)
-    {   
+    {
         $resident = Resident::create($request);
 
-        $registrationDate =  Carbon::now();
+        $registrationDate = Carbon::now()->format('Y-m-d');
         $registrationStatus = 0;
         $residentId = $resident->resident_id;
-        
-        if($resident && $residentId) {
+
+        if ($resident && $residentId) {
             foreach ($request['apartments'] as $residentData) {
                 $apartment = Apartment::where('apartment_number', $residentData['apartment_number'])->first();
                 if ($apartment) {
@@ -54,5 +53,40 @@ class ResidentRepository
         $resident = Resident::where('resident_id', $id)
             ->with('apartments')->get();
         return $resident;
+    }
+
+    public function update(array $request, int $id)
+    {
+        $updated = Resident::where('resident_id', $id)->update($request);
+        return $updated;
+    }
+
+    public function addResidentToApartment(array $request, int $id)
+    {
+        $apartment = Apartment::where('apartment_number', $request['apartment_number'])->first();
+
+        $registrationDate = Carbon::now()->format('Y-m-d');
+        $registrationStatus = 0;
+
+        $data = [
+            'apartment_id' => $apartment->apartment_id,
+            'resident_id' => $id,
+            'role_in_apartment' => $request['role_in_apartment'],
+            'registration_date' =>  $registrationDate,
+            'registration_status' => $registrationStatus
+        ];
+
+        $addResidentToApartment = ApartmentResident::create($data);
+
+        return $addResidentToApartment;
+    }
+
+    public function deleteResidentToApartment(array $request, int $id)
+    {
+        $deleted = ApartmentResident::where('resident_id', $id)
+            ->where('apartment_id', $request['apartment_id'])
+            ->delete();
+
+        return $deleted;
     }
 }

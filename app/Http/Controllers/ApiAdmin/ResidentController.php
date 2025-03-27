@@ -3,15 +3,13 @@
 namespace App\Http\Controllers\ApiAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ApartmentResident;
-use App\Models\Resident;
 use App\Services\ApiAdmin\ResidentService;
 use App\Helper\Response;
-use App\Models\Apartment;
 use Illuminate\Http\Request;
 use App\Http\Requests\ResidentRequest\CreateResidentRequest;
-use Illuminate\Support\Carbon;
-use App\Models\Building;
+use App\Http\Requests\ResidentRequest\AddResidentToApartment;
+use App\Http\Requests\ResidentRequest\DeleteResidentToApartment;
+use App\Http\Requests\ResidentRequest\UpdateResidentRequest;
 use Illuminate\Support\Facades\DB;
 
 class ResidentController extends Controller
@@ -48,6 +46,35 @@ class ResidentController extends Controller
         try {
             $resident = $this->residentService->edit($id);
             return Response::data(['data' => $resident]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function update(UpdateResidentRequest $request, $id)
+    {
+        try {
+            $update = $this->residentService->update($request->only('resident_id', 'full_name', 'id_card_number', 'date_of_birth', 'gender', 'phone_number', 'email'), $id);
+            return Response::data(['data' => $update]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function addResidentToApartment(AddResidentToApartment $request, $id)
+    {
+        try {
+            $addResidentToApartment = $this->residentService->addResidentToApartment($request->only('resident_id', 'apartment_number', 'role_in_apartment'), $id);
+            return Response::data(['data' => $addResidentToApartment]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function deleteResidentToApartment(DeleteResidentToApartment $request, $id) {
+        try {
+            $addResidentToApartment = $this->residentService->deleteResidentToApartment($request->only('resident_id', 'apartment_id'), $id);
+            return Response::data(['data' => $addResidentToApartment]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
