@@ -7,6 +7,7 @@ use App\Http\Controllers\ApiAdmin\AuthController;
 use App\Http\Controllers\ApiAdmin\DashboardController;
 use App\Http\Controllers\ApiAdmin\ApartmentController;
 use App\Http\Controllers\ApiAdmin\ResidentController;
+use App\Http\Controllers\ApiAdmin\InvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,7 +62,14 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/resident-list/{id}', [ResidentController::class, 'getListResident']);
             Route::post('/create', [ResidentController::class, 'create']);
             Route::get('/resident/{id}/edit', [ResidentController::class, 'edit']);
+            Route::post('/{id}/add-apartment', [ResidentController::class, 'addResidentToApartment']);
+            Route::post('/{id}/delete-apartment', [ResidentController::class, 'deleteResidentToApartment']);
+            Route::post('/update/{id}', [ResidentController::class, 'update']);
         });
-        
+
+         //invoice
+         Route::group(['prefix' => 'invoice'], function () {
+            Route::get('/list-by-building/{id}', [InvoiceController::class, 'getListInvoice']);
+        });
     });
 });
