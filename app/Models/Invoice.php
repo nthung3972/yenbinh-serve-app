@@ -15,6 +15,7 @@ class Invoice extends Model
         'building_id',
         'apartment_id',
         'invoice_date',
+        'due_date',
         'total_amount',
         'status'
     ];

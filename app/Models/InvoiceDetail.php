@@ -14,7 +14,11 @@ class InvoiceDetail extends Model
     protected $fillable = [
         'invoice_id',
         'service_name',
-        'amount'
+        'amount',
+        'quantity',
+        'price',
+        'amount',
+        'description',
     ];
 
     public function invoice()

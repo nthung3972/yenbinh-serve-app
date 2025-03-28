@@ -33,7 +33,9 @@ class Response
      */
     public static function dataError($code = 401, $data = [], $message = 'Error')
     {
-        if(!$code) $code = 401;
+        // Đảm bảo $code luôn là một số nguyên
+        $code = is_numeric($code) ? (int)$code : 401;
+
         $dataFormat = [
             'success' => false,
             'data' => $data,

@@ -70,6 +70,9 @@ Route::group(['prefix' => 'admin'], function () {
          //invoice
          Route::group(['prefix' => 'invoice'], function () {
             Route::get('/list-by-building/{id}', [InvoiceController::class, 'getListInvoice']);
+            Route::post('/create', [InvoiceController::class, 'create']);
+            Route::get('/edit/{id}', [InvoiceController::class, 'show']);
+            Route::post('/update/{id}', [InvoiceController::class, 'update']);
         });
     });
 });

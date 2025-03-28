@@ -19,4 +19,19 @@ class InvoiceService
             $request->keyword
         );
     }
+
+    public function create(array $request)
+    {
+        return $this->invoiceRepository->create($request);
+    }
+
+    public function show(int $id)
+    {
+        return $this->invoiceRepository->show($id);
+    }
+
+    public function update(array $request, int $id)
+    {
+        return $this->invoiceRepository->update($request, $id);
+    }
 }
