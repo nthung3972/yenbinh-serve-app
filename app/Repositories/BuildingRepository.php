@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Building;
+use App\Models\Invoice;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
@@ -94,19 +95,56 @@ class BuildingRepository
         return Building::where('building_id', $id)->update($request);
     }
 
-    public function statsBuildingById(int $id)
+    public function statsBuildingById(int $building_id)
     {
-        $buildings = Building::withCount('apartments')
+        $totalInvoices = Invoice::where('building_id', $building_id)->count();
+
+        $paidInvoices = Invoice::where('building_id', $building_id)
+                        ->where('status', 1)
+                        ->count();
+    
+        $unpaidInvoices = Invoice::where('building_id', $building_id)
+                        ->where(function ($query) {
+                            $query->where('status', 0)
+                                  ->orWhere('status', 2);
+                        })
+                        ->count();
+    
+        // Tỷ lệ thu phí (tránh chia cho 0)
+        $collectionRate = $totalInvoices > 0 ? round(($paidInvoices / $totalInvoices) * 100, 2) : 0;
+    
+        // Lấy thông tin tòa nhà + số lượng căn hộ + số lượng cư dân
+        $buildings = Building::where('building_id', $building_id)
+            ->withCount('apartments')
             ->withCount([
-                'apartments as occupied_apartments_count' => function ($query) {
-                    $query->where('status', 0);
+                'apartments as occupied_apartments' => function ($query) {
+                    $query->whereHas('residents'); // Căn hộ có cư dân
                 }
             ])
-            ->withCount(['apartments as residents_count' => function ($query) {
-                $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
-            }])
-            ->where('building_id', $id)
+            ->withCount([
+                'apartments as empty_apartments' => function ($query) {
+                    $query->whereDoesntHave('residents'); // Căn hộ trống
+                }
+            ])
+            ->withCount([
+                'apartments as residents_count' => function ($query) {
+                    $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+                }
+            ])
             ->get();
-            return $buildings;
+    
+        // Thêm tỷ lệ thu phí & tỷ lệ sử dụng căn hộ vào kết quả
+        $buildings->transform(function ($building) use ($collectionRate) {
+            $building->collectionRate = $collectionRate;
+    
+            // Tỷ lệ sử dụng căn hộ (Occupied Apartments / Total Apartments)
+            $building->occupancyRate = $building->apartments_count > 0
+                ? round(($building->occupied_apartments / $building->apartments_count) * 100, 2)
+                : 0;
+    
+            return $building;
+        });
+        
+        return $buildings;
     }
 }
