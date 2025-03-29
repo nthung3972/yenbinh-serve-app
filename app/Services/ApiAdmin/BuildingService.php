@@ -16,11 +16,6 @@ class BuildingService
     ) {
     }
 
-    public function overview($request)
-    {
-        return $this->buildingRepository->overview($request);
-    }
-
     public function getListBuilding(array $request)
     {
         return $this->buildingRepository->getListBuilding($request);
@@ -39,6 +34,11 @@ class BuildingService
     public function updateBuilding(int $id, array $request)
     {
         return $this->buildingRepository->updateBuilding($id, $request);
+    }
+
+    public function statsAllBuildings($request)
+    {
+        return $this->buildingRepository->statsAllBuildings($request);
     }
 
     public function statsBuildingById(int $id)

@@ -15,10 +15,10 @@ class DashboardController extends Controller
         public BuildingService $buildingService,
     ) {}
 
-    public function overview(Request $request)
+    public function statsAllBuildings(Request $request)
     {   
         try {
-            $buildings = $this->buildingService->overview($request);
+            $buildings = $this->buildingService->statsAllBuildings($request);
             return Response::data(['data' => $buildings]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
