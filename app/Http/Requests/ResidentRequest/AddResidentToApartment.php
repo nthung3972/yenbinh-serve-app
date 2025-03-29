@@ -35,7 +35,7 @@ class AddResidentToApartment extends FormRequest
         $validator->after(function ($validator) {
             // Kiểm tra tồn tại của căn hộ
             $apartment = Apartment::where('apartment_number', $this->input('apartment_number'))->first();
-            
+
             if (!$apartment) {
                 $validator->errors()->add('apartment_number', "Căn hộ {$this->input('apartment_number')} không tồn tại");
                 return;
@@ -45,7 +45,7 @@ class AddResidentToApartment extends FormRequest
             $existingOwnership = ApartmentResident::where('resident_id', $this->input('resident_id'))
                 ->where('apartment_id', $apartment->apartment_id)
                 ->exists();
-            
+
             if ($existingOwnership) {
                 $validator->errors()->add('apartment_number', "Cư dân đã sở hữu căn hộ {$apartment->apartment_number}");
                 return;
@@ -55,7 +55,7 @@ class AddResidentToApartment extends FormRequest
             $existingOwner = ApartmentResident::where('apartment_id', $apartment->apartment_id)
                 ->where('role_in_apartment', 0)
                 ->exists();
-            
+
             if ($existingOwner && $this->input('role_in_apartment') == 0) {
                 $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} đã có chủ sở hữu");
                 return;

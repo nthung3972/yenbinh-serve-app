@@ -34,30 +34,33 @@ class CreateResidentRequest extends FormRequest
 
             // Kiểm tra căn hộ
             'apartments' => [
-                'required', 
-                'array', 
+                'required',
+                'array',
                 'min:1',
                 function ($attribute, $value, $fail) {
                     // Kiểm tra từng căn hộ
                     foreach ($value as $apartment) {
                         // Kiểm tra căn hộ có tồn tại không
                         $existingApartment = Apartment::where('apartment_number', $apartment['apartment_number'])->first();
-                        
+
                         if (!$existingApartment) {
                             $fail("Căn hộ {$apartment['apartment_number']} không tồn tại.");
                             continue;
                         }
 
-                        // Nếu là chủ hộ (role_in_partment = 0)
-                        if ($apartment['role_in_apartment'] == 0) {
-                            // Kiểm tra căn hộ đã có chủ hộ chưa
-                            $existingOwner = ApartmentResident::where('apartment_id', $existingApartment->apartment_id)
-                                ->where('role_in_apartment', 0)
-                                ->exists();
-                                
-                            if ($existingOwner) {
-                                $fail("Căn hộ {$apartment['apartment_number']} đã có chủ hộ.");
-                            }
+                        // Kiểm tra căn hộ đã có chủ hộ chưa
+                        $existingOwner = ApartmentResident::where('apartment_id', $existingApartment->apartment_id)
+                            ->where('role_in_apartment', 0)
+                            ->exists();
+
+                        // Nếu đã có chủ hộ nhưng vẫn thêm cư dân có role = 0 => Báo lỗi
+                        if ($existingOwner && $apartment['role_in_apartment'] == 0) {
+                            $fail("Căn hộ {$apartment['apartment_number']} đã có chủ hộ.");
+                        }
+
+                        // Nếu chưa có chủ hộ nhưng cư dân đầu tiên không phải chủ hộ => Báo lỗi
+                        if (!$existingOwner && $apartment['role_in_apartment'] != 0) {
+                            $fail("Căn hộ {$apartment['apartment_number']} chưa có chủ hộ. Cư dân đầu tiên phải là chủ hộ.");
                         }
                     }
 
@@ -65,7 +68,7 @@ class CreateResidentRequest extends FormRequest
                     $uniqueApartments = collect($value)
                         ->pluck('apartment_number')
                         ->unique();
-                    
+
                     if ($uniqueApartments->count() !== count($value)) {
                         $fail('Các căn hộ không được trùng nhau.');
                     }

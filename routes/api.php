@@ -37,7 +37,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'dashboard'], function () {
             Route::get('/collection-rate', [DashboardController::class, 'getCollectionRateByYear']);
             Route::get('/stats/{id}', [DashboardController::class, 'statsBuildingById']);
-            Route::get('/overview', [DashboardController::class, 'overview']);
+            Route::get('/stats-all', [DashboardController::class, 'statsAllBuildings']);
         });
 
         //building
