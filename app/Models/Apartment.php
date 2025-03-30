@@ -30,4 +30,9 @@ class Apartment extends Model
     {
         return $this->belongsTo(Building::class, 'building_id', 'building_id');
     }
+
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class, 'resident_id', 'resident_id');
+    }
 }

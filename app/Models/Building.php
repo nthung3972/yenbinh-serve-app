@@ -35,6 +35,11 @@ class Building extends Model
         return $this->hasMany(Invoice::class, 'building_id', 'building_id');
     }
 
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class, 'building_id', 'building_id');
+    }
+
     public function getAllResidents()
     {
         return $this->apartments()

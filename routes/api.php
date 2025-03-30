@@ -8,6 +8,7 @@ use App\Http\Controllers\ApiAdmin\DashboardController;
 use App\Http\Controllers\ApiAdmin\ApartmentController;
 use App\Http\Controllers\ApiAdmin\ResidentController;
 use App\Http\Controllers\ApiAdmin\InvoiceController;
+use App\Http\Controllers\ApiAdmin\VehicleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +74,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create', [InvoiceController::class, 'create']);
             Route::get('/edit/{id}', [InvoiceController::class, 'show']);
             Route::post('/update/{id}', [InvoiceController::class, 'update']);
+        });
+
+        //vehicle
+        Route::group(['prefix' => 'vehicle'], function () {
+            Route::get('/list-by-building/{id}', [VehicleController::class, 'getListVehicle']);
         });
     });
 });
