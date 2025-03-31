@@ -8,6 +8,7 @@ use App\Services\ApiAdmin\VehicleService;
 use App\Helper\Response;
 use App\Http\Requests\VehicleRequest\CreateVehicleRequest;
 use App\Http\Requests\VehicleRequest\UpdateVehicleRequest;
+use App\Exceptions\ValidationException;
 
 class VehicleController extends Controller
 {
@@ -34,14 +35,11 @@ class VehicleController extends Controller
 
         try {
             $vehicles = $this->vehicleService->create($filteredVehicles);
-            return Response::data(['data' => $vehicles]);
+            return Response::data($vehicles);
+        } catch (ValidationException $e) {
+            return Response::dataError($e->getCode(), $e->getErrors(), "Lỗi xác thực dữ liệu");
         } catch (\Throwable $th) {
-            $message = $th->getMessage();
-            if (str_contains($message, ':')) {
-                [$field, $error] = explode(':', $message, 2);
-                return Response::dataError($th->getCode(), ['errors' => [$field => [$error]]], $error);
-            }
-            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode() ?: 500, ['general' => [$th->getMessage()]], "Lỗi hệ thống");
         }
     }
 
@@ -60,9 +58,11 @@ class VehicleController extends Controller
         try {
             $vehicle = $this->vehicleService
             ->update($request->only('building_id', 'apartment_number', 'license_plate', 'vehicle_type', 'parking_slot', 'created_at', 'status'), $id);
-            return Response::data(['data' => $vehicle]);
+            return Response::data($vehicle);
+        } catch (ValidationException $e) {
+            return Response::dataError($e->getCode(), $e->getErrors(), "Lỗi xác thực dữ liệu");
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode() ?: 500, ['general' => [$th->getMessage()]], "Lỗi hệ thống");
         }
     }
 }

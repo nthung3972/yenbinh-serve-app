@@ -34,9 +34,14 @@ class VehicleRepository
         return $vehicles;
     }
 
-    public function checkVehicleSlot($slot) {
-        $checkSlot = Vehicle::where('parking_slot', $slot)->exists();
-        return $checkSlot;
+    public function checkVehicleSlot($slot, $vehicleId = null) {
+        $query = Vehicle::where('parking_slot', $slot);
+    
+        if ($vehicleId) {
+            $query->where('vehicle_id', '!=', $vehicleId);
+        }
+        
+        return $query->exists();
     }
 
     public function create(array $request) {
