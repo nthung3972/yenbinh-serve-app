@@ -79,6 +79,9 @@ Route::group(['prefix' => 'admin'], function () {
         //vehicle
         Route::group(['prefix' => 'vehicle'], function () {
             Route::get('/list-by-building/{id}', [VehicleController::class, 'getListVehicle']);
+            Route::post('/create', [VehicleController::class, 'create']);
+            Route::get('/edit/{id}', [VehicleController::class, 'edit']);
+            Route::post('/update/{id}', [VehicleController::class, 'update']);
         });
     });
 });

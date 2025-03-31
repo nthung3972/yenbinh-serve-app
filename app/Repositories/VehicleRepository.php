@@ -12,13 +12,12 @@ class VehicleRepository
     {
         $query = Vehicle::select('vehicles.*', 'apartments.apartment_number')
         ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
-        ->where('vehicles.building_id', $buildingId);
+        ->where('vehicles.building_id', $building_id);
 
-        // Lọc theo từ khóa biển số xe hoặc số căn hộ
         if (!empty($keyword)) {
-            $query->where(function ($q) use ($request) {
-                $q->where('vehicles.license_plate', 'LIKE', '%' . $request->keyword . '%')
-                    ->orWhere('apartments.apartment_number', 'LIKE', '%' . $request->keyword . '%');
+            $query->where(function ($q) use ($keyword) {
+                $q->where('vehicles.license_plate', 'LIKE', '%' . $keyword . '%')
+                    ->orWhere('apartments.apartment_number', 'LIKE', '%' . $keyword . '%');
             });
         }
 
@@ -26,13 +25,51 @@ class VehicleRepository
             $query->where('vehicle_type', 'LIKE', "%$vehicle_type%");
         }
 
-        // $query->orderBy('created_at', 'desc');
+        $query->orderBy('created_at', 'desc');
         // dd($query->toSql(), $query->getBindings());
 
-        $vehicles= $query->with('resident')
+        $vehicles = $query->with('apartment')
             ->paginate($perPage);
-        // dd($vehicles->toArray());
 
         return $vehicles;
+    }
+
+    public function checkVehicleSlot($slot) {
+        $checkSlot = Vehicle::where('parking_slot', $slot)->exists();
+        return $checkSlot;
+    }
+
+    public function create(array $request) {
+        foreach($request as $vehicle) {
+            Vehicle::create([
+                'license_plate' => $vehicle['license_plate'],
+                'vehicle_type' => $vehicle['vehicle_type'],
+                'parking_slot' => $vehicle['parking_slot'],
+                'status' => $vehicle['status'],
+                'building_id' => $vehicle['building_id'],
+                'apartment_id' => $vehicle['apartment_id'],
+                'created_at' => $vehicle['created_at'],
+            ]);
+        }
+    }
+
+    public function edit(int $id)
+    {
+        $vehicle = Vehicle::with('apartment')->where('vehicle_id', $id)->first();
+        return $vehicle;
+    }
+
+    public function update(array $request, int $id)
+    {
+        $update = Vehicle::where('vehicle_id', $id)->update([
+            'license_plate' => $request['license_plate'],
+            'vehicle_type' => $request['vehicle_type'],
+            'parking_slot' => $request['parking_slot'],
+            'status' => $request['status'],
+            'building_id' => $request['building_id'],
+            'apartment_id' => $request['apartment_id'],
+            'created_at' => $request['created_at'],
+        ]);
+        return $update;
     }
 }

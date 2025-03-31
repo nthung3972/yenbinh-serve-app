@@ -13,6 +13,8 @@ class Vehicle extends Model
 
     protected $primaryKey = 'vehicle_id';
 
+    protected $appends = ['apartment_number'];
+
     protected $fillable = [
         'license_plate',
         'vehicle_type',
@@ -30,5 +32,10 @@ class Vehicle extends Model
     public function building()
     {
         return $this->belongsTo(Building::class, 'building_id', 'building_id');
+    }
+
+    public function getApartmentNumberAttribute()
+    {
+        return $this->apartment->apartment_number ?? null;
     }
 }

@@ -30,22 +30,22 @@ class ApartmentRepository
 
     public function addMultipleResidents(array $request, int $id)
     {
-        $createdResidents = [];
-        foreach ($request as $residentData) {
-            $resident = Resident::create($residentData);
+        // $createdResidents = [];
+        // foreach ($request as $residentData) {
+        //     $resident = Resident::create($residentData);
 
-            ApartmentResident::create([
-                'apartment_id' => $id,
-                'resident_id' => $resident->id,
-            ]);
+            // ApartmentResident::create([
+            //     'apartment_id' => $id,
+            //     'resident_id' => $resident->id,
+            // ]);
 
-            $createdResidents[] = $resident;
-        }
+        //     $createdResidents[] = $resident;
+        // }
 
-        return response()->json([
-            'message' => 'Đã thêm tất cả cư dân thành công',
-            'residents' => $createdResidents
-        ], 201);
+        // return response()->json([
+        //     'message' => 'Đã thêm tất cả cư dân thành công',
+        //     'residents' => $createdResidents
+        // ], 201);
     }
 
     public function getApartmentDetail(int $id)
@@ -58,5 +58,11 @@ class ApartmentRepository
     {
         $update = Apartment::where('apartment_id', $id)->update($request);
         return $update;
+    }
+
+    public function getApartmentByNumber($apartment_number)
+    {
+        $apartment = Apartment::where('apartment_number', $apartment_number)->first();
+        return $apartment;
     }
 }
