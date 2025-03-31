@@ -6,6 +6,7 @@ use App\Repositories\VehicleRepository;
 use App\Repositories\ApartmentRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use App\Exceptions\ValidationException;
 
 class VehicleService
 {
@@ -26,29 +27,50 @@ class VehicleService
 
     public function create(array $request)
     {
-        foreach ($request as $index => &$vehicle) {
+        $data = $this->validateVehicles($request);
+        return $this->vehicleRepository->create($data);
+    }
+
+    public function update($vehicleData, $id)
+    {
+        $data = $this->validateSingleVehicle($vehicleData, $id);
+        
+        return $this->vehicleRepository->update($data, $id);
+    }
+
+    protected function validateVehicles(array $vehicles)
+    {
+        $errors = [];
+        
+        foreach ($vehicles as $index => $vehicle) {
+            // Kiểm tra căn hộ
             $apartment = $this->apartmentRepository->getApartmentByNumber($vehicle['apartment_number']);
-
             if (!$apartment) {
-                throw new \Exception("{$index}.apartment_number:Số căn hộ {$vehicle['apartment_number']} không tồn tại!", 422);
+                $errors["{$index}.apartment_number"] = ["Số căn hộ {$vehicle['apartment_number']} không tồn tại!"];
+                continue; // Bỏ qua các kiểm tra khác nếu căn hộ không tồn tại
             }
-            $vehicle['apartment_id'] = $apartment->apartment_id;
-
+            
+            $vehicles[$index]['apartment_id'] = $apartment->apartment_id;
+            
+            // Kiểm tra vị trí đỗ xe
             if (!empty($vehicle['parking_slot'])) {
                 $parkingExists = $this->vehicleRepository->checkVehicleSlot($vehicle['parking_slot']);
                 if ($parkingExists) {
-                    throw new \Exception("{$index}.parking_slot: Vị trí {$vehicle['parking_slot']} đã có xe đỗ!", 422);
+                    $errors["{$index}.parking_slot"] = ["Vị trí {$vehicle['parking_slot']} đã có xe đỗ!"];
                 }
             }
-
+            
+            // Kiểm tra trạng thái
             if ($vehicle['status'] === config('constant.vehicle_status.INACTVE')) {
-                throw new \Exception("{$index}.status: Trạng thái xe phải đang hoạt động!", 422);
+                $errors["{$index}.status"] = ["Trạng thái xe phải đang hoạt động!"];
             }
         }
-        unset($vehicle);
-
-        return $this->vehicleRepository->create($request);
-    
+        
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
+        }
+        
+        return $vehicles;
     }
 
     public function edit(int $id)
@@ -61,20 +83,29 @@ class VehicleService
         return $vehicle;
     }
 
-    public function update(array $request, int $id)
+    public function validateSingleVehicle(array $vehicle, int $id)
     {
-        $apartment = $this->apartmentRepository->getApartmentByNumber($request['apartment_number']);
+        $apartment = $this->apartmentRepository->getApartmentByNumber($vehicle['apartment_number']);
         if (!$apartment) {
-            throw new \Exception("Số căn hộ {$request['apartment_number']} không tồn tại!", 422);
+            throw ValidationException::forField(
+                'apartment_number', 
+                "Số căn hộ {$vehicle['apartment_number']} không tồn tại!"
+            );
         }
-        $request['apartment_id'] = $apartment->apartment_id;
-
-        if (!empty($request['parking_slot'])) {
-            $parkingExists = $this->vehicleRepository->checkVehicleSlot($request['parking_slot']);
+        
+        $vehicle['apartment_id'] = $apartment['apartment_id'];
+        
+        // Kiểm tra vị trí đỗ xe
+        if (!empty($vehicle['parking_slot'])) {
+            $parkingExists = $this->vehicleRepository->checkVehicleSlot($vehicle['parking_slot'], $id);
             if ($parkingExists) {
-                throw new \Exception("Vị trí {$request['parking_slot']} đã có xe đỗ!", 422);
+                throw ValidationException::forField(
+                    'parking_slot', 
+                    "Vị trí {$vehicle['parking_slot']} đã có xe đỗ!"
+                );
             }
         }
-        return $this->vehicleRepository->update($request, $id);
+        
+        return $vehicle;
     }
 }
