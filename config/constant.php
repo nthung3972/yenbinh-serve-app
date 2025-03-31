@@ -19,4 +19,9 @@ return [
         'update_building_image' => 'building/information/image',
         //TODO
     ],
+
+    'vehicle_status' => [
+        'ACTIVE' => 0,
+        'INACTVE' => 1
+    ]
 ];
