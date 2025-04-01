@@ -9,6 +9,7 @@ use App\Http\Controllers\ApiAdmin\ApartmentController;
 use App\Http\Controllers\ApiAdmin\ResidentController;
 use App\Http\Controllers\ApiAdmin\InvoiceController;
 use App\Http\Controllers\ApiAdmin\VehicleController;
+use App\Http\Controllers\ApiAdmin\StaffController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,6 +86,12 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create-building', [BuildingController::class, 'create']);
             Route::get('/edit/{id}', [BuildingController::class, 'edit']);
             Route::put('/update/{id}', [BuildingController::class, 'update']);
+        });
+
+        //staff
+        Route::group(['prefix' => 'staff'], function () {
+            // Route::get('/staff-list', [BuildingController::class, 'getListStaff']);
+            Route::post('/create-staff', [StaffController::class, 'createStaff']);
         });
     });
 
