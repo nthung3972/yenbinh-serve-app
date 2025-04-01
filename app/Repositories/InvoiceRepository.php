@@ -12,7 +12,7 @@ class InvoiceRepository
 {
     public function getInvoicesByBuilding($building_id, $perPage = '', $keyword = null)
     {
-        $query = Invoice::where('building_id', $building_id)
+        $query = Invoice::with('updatedBy')->where('building_id', $building_id)
             ->with('apartment') // Load thông tin căn hộ
             ->orderBy('invoice_date', 'desc');
 
@@ -31,6 +31,7 @@ class InvoiceRepository
 
     public function create(array $request)
     {
+        $user = auth()->user();
         $apartment = Apartment::where('apartment_number', $request['apartment_number'])->first();
         if ($apartment) {
             $apartmentId =  $apartment->apartment_id;
@@ -42,6 +43,7 @@ class InvoiceRepository
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
             'status' => $request['status'],
+            'updated_by' => $user->id
         ]);
 
         $invoiceId = $invoice->invoice_id;
@@ -85,6 +87,8 @@ class InvoiceRepository
 
     public function update(array $request, int $id)
     {
+        $user = auth()->user();
+
         $invoice = Invoice::find($id);
 
         if (!$invoice) {
@@ -96,6 +100,7 @@ class InvoiceRepository
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
             'status' => $request['status'],
+            'updated_by' => $user->id,
         ]);
 
         InvoiceDetail::where('invoice_id', $invoice->invoice_id)->delete();

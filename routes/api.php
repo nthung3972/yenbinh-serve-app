@@ -30,23 +30,16 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('login', [AuthController::class, 'login']);
     });
 
-    Route::group(['middleware' => 'auth_admin', 'cors'], function () {
+    Route::group(['middleware' => 'check_auth', 'cors'], function () {
+        //user
         Route::group(['prefix' => 'me'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
 
+        //dashboard
         Route::group(['prefix' => 'dashboard'], function () {
-            Route::get('/collection-rate', [DashboardController::class, 'getCollectionRateByYear']);
             Route::get('/stats/{id}', [DashboardController::class, 'statsBuildingById']);
             Route::get('/stats-all', [DashboardController::class, 'statsAllBuildings']);
-        });
-
-        //building
-        Route::group(['prefix' => 'building'], function () {
-            Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
-            Route::post('/create-building', [BuildingController::class, 'create']);
-            Route::get('/edit/{id}', [BuildingController::class, 'edit']);
-            Route::put('/update/{id}', [BuildingController::class, 'update']);
         });
 
         //apartment
@@ -58,8 +51,8 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/apartment/{id}/update', [ApartmentController::class, 'update']);
         });
 
-        //resident
-        Route::group(['prefix' => 'resident'], function () {
+         //resident
+         Route::group(['prefix' => 'resident'], function () {
             Route::get('/resident-list/{id}', [ResidentController::class, 'getListResident']);
             Route::post('/create', [ResidentController::class, 'create']);
             Route::get('/resident/{id}/edit', [ResidentController::class, 'edit']);
@@ -83,5 +76,19 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/edit/{id}', [VehicleController::class, 'edit']);
             Route::post('/update/{id}', [VehicleController::class, 'update']);
         });
+    });
+
+    Route::group(['middleware' => 'auth_admin', 'cors'], function () {
+        //building
+        Route::group(['prefix' => 'building'], function () {
+            Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
+            Route::post('/create-building', [BuildingController::class, 'create']);
+            Route::get('/edit/{id}', [BuildingController::class, 'edit']);
+            Route::put('/update/{id}', [BuildingController::class, 'update']);
+        });
+    });
+
+    Route::group(['middleware' => 'auth_staff', 'cors'], function () {
+        
     });
 });

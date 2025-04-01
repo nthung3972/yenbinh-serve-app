@@ -36,9 +36,14 @@ class BuildingService
         return $this->buildingRepository->updateBuilding($id, $request);
     }
 
-    public function statsAllBuildings($request)
+    public function statsAllBuildings($user)
     {
-        return $this->buildingRepository->statsAllBuildings($request);
+        return $this->buildingRepository->statsAllBuildings($user);
+    }
+
+    public function isAssigned($user, $id) 
+    {
+        return $this->buildingRepository->isAssigned($user, $id);
     }
 
     public function statsBuildingById(int $id)

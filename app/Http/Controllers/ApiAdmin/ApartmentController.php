@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApartmentResident;
 use App\Models\Resident;
 use App\Services\ApiAdmin\ApartmentService;
+use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
 use App\Models\Apartment;
 use Illuminate\Http\Request;
@@ -17,11 +18,20 @@ class ApartmentController extends Controller
 {
     public function __construct(
         public ApartmentService $apartmentService,
+        public BuildingService $buildingService,
     ) {}
 
     public function getListByBuilding(Request $request, $id)
     {
         try {
+            $user = auth()->user();
+            if ($user->role === 'staff') {
+                $isAssigned = $this->buildingService->isAssigned($user, $id);
+                if (!$isAssigned) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
+                $apartmentList = $this->apartmentService->getListByBuilding($id, $request);
+            }
             $apartmentList = $this->apartmentService->getListByBuilding($id, $request);
             return Response::data(['data' => $apartmentList]);
         } catch (\Throwable $th) {

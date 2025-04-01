@@ -12,7 +12,7 @@ class ApartmentRepository
 {
     public function getListByBuilding($id, $perPage = '', $keyword = null)
     {
-        $query = Apartment::where('building_id', $id);
+        $query = Apartment::with('updatedBy')->where('building_id', $id);
         if (!empty($keyword)) {
             $query->where('apartment_number', 'LIKE', "%$keyword%");
         }
@@ -24,6 +24,8 @@ class ApartmentRepository
 
     public function create(array $request)
     {
+        $user = auth()->user();
+        $request['updated_by'] = $user->id;
         $apartment = Apartment::create($request);
         return $apartment;
     }
@@ -56,6 +58,8 @@ class ApartmentRepository
 
     public function update(array $request, int $id)
     {
+        $user = auth()->user();
+        $request['updated_by'] = $user->id;
         $update = Apartment::where('apartment_id', $id)->update($request);
         return $update;
     }

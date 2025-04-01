@@ -22,12 +22,18 @@ class Resident extends Model
         'email',
         'move_in_date',
         'move_out_date',
-        'resident_type'
+        'resident_type',
+        'updated_by'
     ];
 
     public function apartments()
     {
         return $this->belongsToMany(Apartment::class, 'apartment_resident', 'resident_id', 'apartment_id')
-        ->withPivot(['role_in_apartment', 'registration_date', 'registration_status']);;
+            ->withPivot(['role_in_apartment', 'registration_date', 'registration_status']);
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

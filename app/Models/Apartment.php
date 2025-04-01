@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Apartment extends Model
 {
@@ -18,7 +19,8 @@ class Apartment extends Model
         'floor_number',
         'area',
         'building_id',
-        'ownership_type'
+        'ownership_type',
+        'updated_by'
     ];
 
     public function residents()
@@ -34,5 +36,10 @@ class Apartment extends Model
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class, 'resident_id', 'resident_id');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

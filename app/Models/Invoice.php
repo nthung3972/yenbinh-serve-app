@@ -17,7 +17,8 @@ class Invoice extends Model
         'invoice_date',
         'due_date',
         'total_amount',
-        'status'
+        'status',
+        'updated_by'
     ];
 
     public function invoiceDetails()
@@ -33,5 +34,10 @@ class Invoice extends Model
     public function apartment()
     {
         return $this->belongsTo(Apartment::class, 'apartment_id', 'apartment_id');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }
