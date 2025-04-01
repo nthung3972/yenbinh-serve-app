@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ApiAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiAdmin\ResidentService;
+use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
 use Illuminate\Http\Request;
 use App\Http\Requests\ResidentRequest\CreateResidentRequest;
@@ -16,11 +17,20 @@ class ResidentController extends Controller
 {
     public function __construct(
         public ResidentService $residentService,
+        public BuildingService $buildingService,
     ) {}
 
     public function getListResident(Request $request, $id)
     {
         try {
+            $user = auth()->user();
+            if ($user->role === 'staff') {
+                $isAssigned = $this->buildingService->isAssigned($user, $id);
+                if (!$isAssigned) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
+                $residents = $this->residentService->getListResident($request, $id);
+            }
             $residents = $this->residentService->getListResident($request, $id);
             return Response::data(['data' => $residents]);
         } catch (\Throwable $th) {

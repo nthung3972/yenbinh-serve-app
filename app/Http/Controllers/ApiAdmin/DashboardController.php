@@ -8,6 +8,8 @@ use App\Models\Invoice;
 use Carbon\Carbon;
 use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
+use App\Models\Building;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -15,42 +17,30 @@ class DashboardController extends Controller
         public BuildingService $buildingService,
     ) {}
 
-    public function statsAllBuildings(Request $request)
+    public function statsAllBuildings()
     {   
         try {
-            $buildings = $this->buildingService->statsAllBuildings($request);
+            $user = auth()->user();
+            if ($user) {
+                $buildings = $this->buildingService->statsAllBuildings($user);
+            }
             return Response::data(['data' => $buildings]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 
-    public function getCollectionRateByYear(Request $request)
-    {
-        $year = $request->input('year', Carbon::now()->year); // Mặc định là năm hiện tại
-
-        $data = Invoice::selectRaw('MONTH(invoice_date) as month, 
-                                SUM(CASE WHEN status = 1 THEN total_amount ELSE 0 END) as collected_amount, 
-                                SUM(total_amount) as total_amount')
-            ->whereYear('invoice_date', $year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-
-        // Tính tỷ lệ thu phí
-        $chartData = $data->map(function ($item) {
-            return [
-                'month' => $item->month,
-                'collection_rate' => $item->total_amount > 0 ? round(($item->collected_amount / $item->total_amount) * 100, 2) : 0
-            ];
-        });
-
-        return response()->json($chartData);
-    }
-
     public function statsBuildingById($id)
     {
         try {
+            $user = auth()->user();
+            if ($user->role === 'staff') {
+                $isAssigned = $this->buildingService->isAssigned($user, $id);
+                if (!$isAssigned) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
+                $building = $this->buildingService->statsBuildingById($id);
+            }
             $building = $this->buildingService->statsBuildingById($id);
             return Response::data(['data' => $building]);
         } catch (\Throwable $th) {

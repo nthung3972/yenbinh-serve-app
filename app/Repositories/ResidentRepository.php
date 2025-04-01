@@ -12,7 +12,7 @@ class ResidentRepository
 {
     public function getListResident($building_id, $perPage = '', $keyword = null)
     {
-        $query = Resident::whereHas('apartments', function ($q) use ($building_id) {
+        $query = Resident::with('updatedBy')->whereHas('apartments', function ($q) use ($building_id) {
             $q->where('building_id', $building_id);
         });
 
@@ -25,6 +25,8 @@ class ResidentRepository
 
     public function create(array $request)
     {
+        $user = auth()->user();
+        $request['updated_by'] = $user->id;
         $resident = Resident::create($request);
 
         $registrationDate = Carbon::now()->format('Y-m-d');
@@ -57,6 +59,8 @@ class ResidentRepository
 
     public function update(array $request, int $id)
     {
+        $user = auth()->user();
+        $request['updated_by'] = $user->id;
         $updated = Resident::where('resident_id', $id)->update($request);
         return $updated;
     }

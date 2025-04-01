@@ -5,6 +5,7 @@ namespace App\Http\Controllers\ApiAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\ApiAdmin\InvoiceService;
+use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
 use App\Http\Requests\InvoiceRequest\CreateInvoiceRequest;
 use App\Http\Requests\InvoiceRequest\UpdateInvoiceRequest;
@@ -14,11 +15,20 @@ class InvoiceController extends Controller
 {
     public function __construct(
         public InvoiceService $invoiceService,
+        public BuildingService $buildingService,
     ) {}
 
     public function getListInvoice(Request $request, $id)
     {
         try {
+            $user = auth()->user();
+            if ($user->role === 'staff') {
+                $isAssigned = $this->buildingService->isAssigned($user, $id);
+                if (!$isAssigned) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
+                $invoices = $this->invoiceService->getInvoicesByBuilding($request, $id);
+            }
             $invoices = $this->invoiceService->getInvoicesByBuilding($request, $id);
             return Response::data(['data' => $invoices]);
         } catch (\Throwable $th) {

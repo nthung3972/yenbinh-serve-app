@@ -10,7 +10,7 @@ class VehicleRepository
 {
     public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null)
     {
-        $query = Vehicle::select('vehicles.*', 'apartments.apartment_number')
+        $query = Vehicle::with('updatedBy')->select('vehicles.*', 'apartments.apartment_number')
         ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
         ->where('vehicles.building_id', $building_id);
 
@@ -45,6 +45,9 @@ class VehicleRepository
     }
 
     public function create(array $request) {
+
+        $user = auth()->user();
+
         foreach($request as $vehicle) {
             Vehicle::create([
                 'license_plate' => $vehicle['license_plate'],
@@ -54,6 +57,7 @@ class VehicleRepository
                 'building_id' => $vehicle['building_id'],
                 'apartment_id' => $vehicle['apartment_id'],
                 'created_at' => $vehicle['created_at'],
+                'updated_by' => $user->id,
             ]);
         }
     }
@@ -66,6 +70,8 @@ class VehicleRepository
 
     public function update(array $request, int $id)
     {
+        $user = auth()->user();
+
         $update = Vehicle::where('vehicle_id', $id)->update([
             'license_plate' => $request['license_plate'],
             'vehicle_type' => $request['vehicle_type'],
@@ -74,6 +80,7 @@ class VehicleRepository
             'building_id' => $request['building_id'],
             'apartment_id' => $request['apartment_id'],
             'created_at' => $request['created_at'],
+            'updated_by' => $user->id,
         ]);
         return $update;
     }

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Building;
 use App\Models\Invoice;
+use App\Models\StaffAssignment;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
@@ -126,34 +127,66 @@ class BuildingRepository
         return $buildings;
     }
 
-    public function statsAllBuildings()
+    public function isAssigned($user, $id)
+    {
+        $isAssigned = StaffAssignment::where('staff_id', $user->id)
+            ->where('building_id', $id)
+            ->exists();
+        return $isAssigned;
+    }
+
+    public function statsAllBuildings($user)
     {
         $currentMonth = now()->format('Y-m');
         $lastMonth = now()->startOfMonth()->subMonth()->format('Y-m');
 
-        // Lấy danh sách tất cả các tòa nhà + số lượng căn hộ + số lượng cư dân
-        $buildings = Building::withCount('apartments')
-            ->withCount([
-                'apartments as occupied_apartments' => function ($query) {
-                    $query->whereHas('residents'); // Căn hộ có cư dân
-                }
-            ])
-            ->withCount([
-                'apartments as empty_apartments' => function ($query) {
-                    $query->whereDoesntHave('residents'); // Căn hộ trống
-                }
-            ])
-            ->withCount([
-                'apartments as residents_count' => function ($query) {
-                    $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
-                }
-            ])
-            ->get();
+        // Nếu user là admin -> lấy tất cả tòa nhà
+        if ($user->role === 'admin') {
+            $buildings = Building::withCount('apartments')
+                ->withCount([
+                    'apartments as occupied_apartments' => function ($query) {
+                        $query->whereHas('residents');
+                    }
+                ])
+                ->withCount([
+                    'apartments as empty_apartments' => function ($query) {
+                        $query->whereDoesntHave('residents');
+                    }
+                ])
+                ->withCount([
+                    'apartments as residents_count' => function ($query) {
+                        $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+                    }
+                ])
+                ->get();
+        } else {
+            // Nếu là staff -> chỉ lấy danh sách tòa nhà mà họ được phân công
+            $buildings = Building::whereIn('building_id', function ($query) use ($user) {
+                $query->select('building_id')
+                    ->from('staff_assignments')
+                    ->where('staff_id', $user->id);
+            })
+                ->withCount('apartments')
+                ->withCount([
+                    'apartments as occupied_apartments' => function ($query) {
+                        $query->whereHas('residents');
+                    }
+                ])
+                ->withCount([
+                    'apartments as empty_apartments' => function ($query) {
+                        $query->whereDoesntHave('residents');
+                    }
+                ])
+                ->withCount([
+                    'apartments as residents_count' => function ($query) {
+                        $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+                    }
+                ])
+                ->get();
+        }
 
-        // Tính toán cho từng tòa nhà
+        // Tính toán số liệu
         $buildings->transform(function ($building) use ($currentMonth, $lastMonth) {
-
-            // Tổng số hóa đơn tháng hiện tại & tháng trước
             $totalInvoicesCurrent = Invoice::where('building_id', $building->building_id)
                 ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
                 ->count();
@@ -162,7 +195,6 @@ class BuildingRepository
                 ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
                 ->count();
 
-            // Số hóa đơn đã thanh toán tháng hiện tại & tháng trước
             $paidInvoicesCurrent = Invoice::where('building_id', $building->building_id)
                 ->where('status', 1)
                 ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
@@ -173,7 +205,7 @@ class BuildingRepository
                 ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
                 ->count();
 
-            // Tính tỷ lệ thu phí của từng tòa nhà
+            // Tính tỷ lệ thu phí
             $building->collectionRate = $totalInvoicesCurrent > 0
                 ? round(($paidInvoicesCurrent / $totalInvoicesCurrent) * 100, 2)
                 : 0;
@@ -182,14 +214,11 @@ class BuildingRepository
                 ? round(($paidInvoicesLast / $totalInvoicesLast) * 100, 2)
                 : 0;
 
-            // Tính phần trăm thay đổi so với tháng trước
-            if ($collectionRateLast > 0) {
-                $building->collectionRateChange = round((($building->collectionRate - $collectionRateLast) / $collectionRateLast) * 100, 2);
-            } else {
-                $building->collectionRateChange = $building->collectionRate > 0 ? 100 : 0;
-            }
+            $building->collectionRateChange = $collectionRateLast > 0
+                ? round((($building->collectionRate - $collectionRateLast) / $collectionRateLast) * 100, 2)
+                : ($building->collectionRate > 0 ? 100 : 0);
 
-            // Tỷ lệ sử dụng căn hộ (Occupied Apartments / Total Apartments)
+            // Tỷ lệ sử dụng căn hộ
             $building->occupancyRate = $building->apartments_count > 0
                 ? round(($building->occupied_apartments / $building->apartments_count) * 100, 2)
                 : 0;
