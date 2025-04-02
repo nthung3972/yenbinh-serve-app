@@ -11,23 +11,21 @@ use Carbon\Carbon;
 
 class BuildingRepository
 {
-    public function getListBuilding(array $request)
+    public function getListBuilding($perPage = '', $keyword = null)
     {
-        $builder = Building::query();
-        if (!empty($request)) {
-            foreach ($request as $key => $value) {
-                dump($key, $value);
-                if ($value === null || $value === '') {
-                    continue;
-                }
-                switch ($key) {
-                    case 'name':
-                        $builder->where('name', 'like', '%' . $value . '%');
-                        break;
-                }
-            }
+        $query = Building::with('staffs:id,name')->orderBy('created_at', 'desc');
+
+        if (!empty($keyword)) {
+            $query->where('buildings.name', 'LIKE', "%$keyword%");
         }
-        return $builder->paginate(config('constant.paginate'));
+        $buildings = $query->paginate($perPage);
+
+        $buildings->getCollection()->transform(function ($building) {
+            $building->staff_names = $building->staffs->pluck('name')->join(', ');
+            return $building;
+        });
+
+        return $buildings;
     }
 
     public function createBuilding(array $request)

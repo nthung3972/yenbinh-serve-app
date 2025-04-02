@@ -8,7 +8,6 @@ use App\Models\Resident;
 use App\Services\ApiAdmin\ApartmentService;
 use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
-use App\Models\Apartment;
 use Illuminate\Http\Request;
 use App\Http\Requests\ApartmentRequest\AddMultipleResidentRequest;
 use App\Http\Requests\ApartmentRequest\UpdateApartmentStatusRequest;
@@ -58,7 +57,7 @@ class ApartmentController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateApartmentStatusRequest $request, $id)
     {
         try {
             $update = $this->apartmentService->update($request->only(['apartment_number', 'area', 'building_id', 'floor_number', 'ownership_type']), $id);

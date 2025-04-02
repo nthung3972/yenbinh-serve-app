@@ -59,6 +59,11 @@ class Building extends Model
             'building_id', // Khóa chính trong bảng buildings
             'apartment_id' // Khóa chính trong bảng apartments
         )->join('apartment_resident', 'resident.resident_id', '=', 'apartment_resident.resident_id')
-         ->select('residents.*');
+            ->select('residents.*');
+    }
+
+    public function staffs()
+    {
+        return $this->belongsToMany(User::class, 'staff_assignments', 'building_id', 'staff_id');
     }
 }

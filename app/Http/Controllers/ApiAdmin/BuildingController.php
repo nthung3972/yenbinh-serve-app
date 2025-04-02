@@ -20,7 +20,7 @@ class BuildingController extends Controller
     public function getListBuilding(GetListBuildingRequest $request)
     {
         try {
-            $buildings = $this->buildingService->getListBuilding($request->all());
+            $buildings = $this->buildingService->getListBuilding($request);
             return Response::data(['data' => $buildings]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());

@@ -22,10 +22,6 @@ use App\Http\Controllers\ApiAdmin\StaffController;
 |
 */
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
-
 Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
@@ -90,12 +86,13 @@ Route::group(['prefix' => 'admin'], function () {
 
         //staff
         Route::group(['prefix' => 'staff'], function () {
-            // Route::get('/staff-list', [BuildingController::class, 'getListStaff']);
+            Route::get('/staff-list', [StaffController::class, 'getListStaff']);
             Route::post('/create-staff', [StaffController::class, 'createStaff']);
+            Route::delete('/delete-staff/{id}', [StaffController::class, 'deleteStaff']);
         });
     });
 
-    Route::group(['middleware' => 'auth_staff', 'cors'], function () {
+    // Route::group(['middleware' => 'auth_staff', 'cors'], function () {
         
-    });
+    // });
 });

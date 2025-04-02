@@ -16,9 +16,12 @@ class BuildingService
     ) {
     }
 
-    public function getListBuilding(array $request)
+    public function getListBuilding($request)
     {
-        return $this->buildingRepository->getListBuilding($request);
+        return $this->buildingRepository->getListBuilding(
+            $request->per_page ?? config('constant.paginate'),
+            $request->keyword
+        );
     }
 
     public function createBuilding(array $request)
