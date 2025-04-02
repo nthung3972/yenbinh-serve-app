@@ -8,6 +8,29 @@ use Carbon\Carbon;
 
 class StaffRepository
 {
+    public function getListStaff($perPage = '', $keyword = null)
+    {
+        $query = User::where('users.role', 'staff')
+        ->select('users.*', 'buildings.name as building_name', 'staff_assignments.role as building_role')
+        ->join('staff_assignments', 'users.id', '=', 'staff_assignments.staff_id')
+        ->join('buildings', 'staff_assignments.building_id', '=', 'buildings.building_id');
+
+        // dd($query->toSql(), $query->getBindings());
+        if (!empty($keyword)) {
+            $query->where('buildings.name', 'LIKE', "%$keyword%");
+        }
+        $apartments = $query->paginate($perPage);
+           
+
+        return $apartments;
+    }
+
+    public function findById($id)
+    {
+        $user = User::find($id);
+        return $user;
+    }
+
     public function createStaff($request)
     {
         $staff = User::create([
@@ -29,5 +52,12 @@ class StaffRepository
             
         }
         return $staff;
+    }
+
+    public function deleteStaff($id)
+    {
+        StaffAssignment::where('staff_id', $id)->delete();
+        $deleteStaff = User::where('id', $id)->delete();
+        return $deleteStaff;
     }
 }

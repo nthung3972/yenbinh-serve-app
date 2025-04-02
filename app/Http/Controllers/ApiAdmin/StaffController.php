@@ -16,6 +16,16 @@ class StaffController extends Controller
         public StaffService $staffService,
     ) {}
 
+    public function getListStaff(Request $request)
+    {
+        try {
+            $staffs = $this->staffService->getListStaff($request);
+            return Response::data(['data' => $staffs]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
     public function createStaff(CreateStaffRequest $request)
     {
         try {
@@ -25,8 +35,20 @@ class StaffController extends Controller
             return Response::data(['data' => $staff]);
         } catch (\Throwable $th) {
             DB::rollback();
-            return response()->json(['error' => $th->getMessage()], 500);
-            // return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function deleteStaff($id)
+    {
+        try {
+            DB::beginTransaction();
+            $deleted = $this->staffService->deleteStaff($id);
+            DB::commit();
+            return Response::data(['data' => $deleted]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 }

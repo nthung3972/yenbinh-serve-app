@@ -39,4 +39,9 @@ class ApartmentResident extends Model
             'resident_id' => $this->resident_id
         ];
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'staff_id', 'id');
+    }
 }

@@ -29,7 +29,7 @@ class CreateStaffRequest extends FormRequest
             'buildings' => 'required|array',
             'buildings.*.building_id' => 'required|exists:buildings,building_id',
             'buildings.*.role' => 'required|string',
-            'buildings.*.assigned_tasks' => 'nullable|array',
+            'buildings.*.assigned_tasks' => 'nullable',
         ];
     }
 }
