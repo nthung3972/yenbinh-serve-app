@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\BuildingRequest;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,7 +22,13 @@ class CreateBuildingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'floors' => 'required|integer|min:1',
+            'image' => 'nullable|string',
+            'total_area' => 'required|numeric|min:0',
+            'status' => 'required|integer|in:0,1',
+            'building_type' => 'required|string|in:residential,commercial,mixed'
         ];
     }
 }

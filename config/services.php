@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'supabase' => [
+        'url' => env('SUPABASE_URL'),
+        'key' => env('SUPABASE_KEY'),
+        // 'secret' => env('SUPABASE_SECRET'),
+        'storage_bucket' => env('SUPABASE_STORAGE_BUCKET', 'images'),
+    ],
+
 ];

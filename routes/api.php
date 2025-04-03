@@ -10,6 +10,7 @@ use App\Http\Controllers\ApiAdmin\ResidentController;
 use App\Http\Controllers\ApiAdmin\InvoiceController;
 use App\Http\Controllers\ApiAdmin\VehicleController;
 use App\Http\Controllers\ApiAdmin\StaffController;
+use App\Http\Controllers\ApiAdmin\ImageUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
 
+        //upload
+        Route::group(['prefix' => 'upload'], function () {
+            Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+        });
+    
         //dashboard
         Route::group(['prefix' => 'dashboard'], function () {
             Route::get('/stats/{id}', [DashboardController::class, 'statsBuildingById']);
@@ -79,9 +85,10 @@ Route::group(['prefix' => 'admin'], function () {
         //building
         Route::group(['prefix' => 'building'], function () {
             Route::get('/building-list', [BuildingController::class, 'getListBuilding']);
-            Route::post('/create-building', [BuildingController::class, 'create']);
+            Route::post('/create', [BuildingController::class, 'create']);
             Route::get('/edit/{id}', [BuildingController::class, 'edit']);
             Route::put('/update/{id}', [BuildingController::class, 'update']);
+            Route::delete('/delete/{id}', [BuildingController::class, 'delete']);
         });
 
         //staff
