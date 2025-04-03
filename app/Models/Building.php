@@ -21,7 +21,8 @@ class Building extends Model
         'image',
         'floors',
         'status',
-        'manager_id'
+        'total_area',
+        'building_type',
     ];
 
     // Một tòa nhà có nhiều căn hộ

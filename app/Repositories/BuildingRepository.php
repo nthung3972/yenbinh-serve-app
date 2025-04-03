@@ -43,6 +43,11 @@ class BuildingRepository
         return Building::where('building_id', $id)->update($request);
     }
 
+    public function deleteBuilding(int $id)
+    {
+        return Building::where('building_id', $id)->delete();
+    }
+
     public function statsBuildingById(int $building_id)
     {
         $currentMonth = now()->format('Y-m');

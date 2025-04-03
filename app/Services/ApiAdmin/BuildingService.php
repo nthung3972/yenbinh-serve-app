@@ -36,7 +36,18 @@ class BuildingService
 
     public function updateBuilding(int $id, array $request)
     {
-        return $this->buildingRepository->updateBuilding($id, $request);
+        $findBuilding = $this->buildingRepository->getBuildingByID($id);
+        if ($findBuilding) {
+            return $this->buildingRepository->updateBuilding($id, $request);
+        }
+    }
+
+    public function delete(int $id)
+    {
+        $findBuilding = $this->buildingRepository->getBuildingByID($id);
+        if ($findBuilding) {
+            return $this->buildingRepository->deleteBuilding($id);
+        }
     }
 
     public function statsAllBuildings($user)
