@@ -19,6 +19,9 @@ class StaffRepository
         if (!empty($keyword)) {
             $query->where('buildings.name', 'LIKE', "%$keyword%");
         }
+
+        $query->orderBy('created_at', 'desc');
+        
         $apartments = $query->paginate($perPage);
            
 

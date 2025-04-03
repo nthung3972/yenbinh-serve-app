@@ -14,10 +14,10 @@ class BuildingRepository
     public function getListBuilding($perPage = '', $keyword = null)
     {
         $query = Building::with('staffs:id,name')->orderBy('created_at', 'desc');
-
         if (!empty($keyword)) {
             $query->where('buildings.name', 'LIKE', "%$keyword%");
         }
+        $query->orderBy('created_at', 'desc');
         $buildings = $query->paginate($perPage);
 
         $buildings->getCollection()->transform(function ($building) {

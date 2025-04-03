@@ -9,7 +9,7 @@ use App\Services\ApiAdmin\ApartmentService;
 use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
 use Illuminate\Http\Request;
-use App\Http\Requests\ApartmentRequest\AddMultipleResidentRequest;
+use App\Http\Requests\ApartmentRequest\CreateApartmentRequest;
 use App\Http\Requests\ApartmentRequest\UpdateApartmentStatusRequest;
 use Illuminate\Support\Carbon;
 
@@ -38,7 +38,7 @@ class ApartmentController extends Controller
         }
     }
 
-    public function create(Request $request)
+    public function create(CreateApartmentRequest $request)
     {
         try {
             $create = $this->apartmentService->create($request->all());

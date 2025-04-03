@@ -20,6 +20,8 @@ class ResidentRepository
             $query->where('full_name', 'LIKE', "%$keyword%");
         }
 
+        $query->orderBy('created_at', 'desc');
+
         return $query->paginate($perPage);
     }
 

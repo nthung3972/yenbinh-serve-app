@@ -26,7 +26,12 @@ class UpdateApartmentStatusRequest extends FormRequest
     {
         return [
             'apartment_id' => 'required|exists:apartments,apartment_id',
-            'apartment_number' => 'required',
+            'apartment_number' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:apartments,apartment_number,'.$this->route('id'). ',apartment_id',
+            ],
             'building_id' => 'required|exists:buildings,building_id',
             'area' => 'required',
             'floor_number' => 'required',

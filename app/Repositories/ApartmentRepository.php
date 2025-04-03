@@ -16,6 +16,7 @@ class ApartmentRepository
         if (!empty($keyword)) {
             $query->where('apartment_number', 'LIKE', "%$keyword%");
         }
+        $query->orderBy('created_at', 'desc');
         $apartments = $query->with('residents')
             ->paginate($perPage);
 
