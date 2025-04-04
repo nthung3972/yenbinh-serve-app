@@ -26,9 +26,15 @@ use App\Http\Controllers\ApiAdmin\ImageUploadController;
 Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
+        Route::get('/verify/{token}', [AuthController::class, 'verify']);
     });
 
-    Route::group(['middleware' => 'check_auth', 'cors'], function () {
+    Route::group(['middleware' => 'check_auth', 'cors', 'verified'], function () {
+        //email
+        Route::group(['prefix' => 'email'], function () {
+            Route::post('/resend', [AuthController::class, 'resendVerification']);
+        });
+        
         //user
         Route::group(['prefix' => 'me'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);

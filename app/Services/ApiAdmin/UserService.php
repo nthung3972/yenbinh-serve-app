@@ -1,13 +1,9 @@
 <?php
 namespace App\Services\ApiAdmin;
 
-// use App\Models\Blog;
-use App\Repositories\BuildingRepository;
-// use App\Repositories\CategoryRepository;
-// use App\Repositories\CommentRepository;
-// use Exception;
-// use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -28,6 +24,31 @@ class UserService
                 'user' => $user
             ];
         }
+    }
+
+    public function createVerificationToken($user)
+    {
+        $verificationToken = Str::random(60);
+        $user->verification_token = $verificationToken;
+        $user->token_expiry = Carbon::now()->addMinutes(10);
+        $user->save();
+
+        return $user;
+    }
+
+    public function checkVerificationToken($token)
+    {
+        $user = User::where('verification_token', $token)->first();
+        return $user;
+        // if ($user) {
+        //     $user->email_verified_at = now();
+        //     $user->verification_token = null;
+        //     $user->save();
+
+        //     return true;
+        // }
+
+        // return false;
     }
 
 }
