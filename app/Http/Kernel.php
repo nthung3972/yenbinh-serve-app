@@ -69,5 +69,6 @@ class Kernel extends HttpKernel
         'check_auth' => \App\Http\Middleware\CheckAuth::class,
         'auth_staff' => \App\Http\Middleware\AuthStaff::class,
         'building_access' => \App\Http\Middleware\CheckBuildingAccess::class,
+        'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
     ];
 }
