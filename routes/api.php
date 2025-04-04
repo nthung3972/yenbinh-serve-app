@@ -32,7 +32,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::group(['middleware' => 'check_auth', 'cors', 'verified'], function () {
         //email
         Route::group(['prefix' => 'email'], function () {
-            Route::post('/resend', [AuthController::class, 'resendVerification']);
+            Route::post('/resend', [AuthController::class, 'resendVerification'])->middleware(['auth:api', 'throttle_resend']);
         });
         
         //user

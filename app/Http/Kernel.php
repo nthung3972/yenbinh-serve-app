@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'auth_staff' => \App\Http\Middleware\AuthStaff::class,
         'building_access' => \App\Http\Middleware\CheckBuildingAccess::class,
         'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+        'throttle_resend' => \App\Http\Middleware\ThrottleResendVerification::class,
     ];
 }

@@ -141,8 +141,9 @@ class AuthController extends Controller
             
             if ($user->email_verified_at !== null) {
                 return response()->json([
-                    'message' => 'Email đã được xác thực trước đó.'
-                ], 400);
+                    'message' => 'Email đã được xác thực trước đó.',
+                    'status' => 422
+                ], 422);
             }
             
             // Tạo token mới nếu không có
@@ -155,12 +156,14 @@ class AuthController extends Controller
             
             return response()->json([
                 'message' => 'Email xác thực đã được gửi lại! Vui lòng hoàn thành xác thực trong vòng ' . $this->tokenExpiryMinutes . ' phút.',
+                'status' => 200,
                 'token_expires_in' => Carbon::now()->diffInSeconds($user->token_expiry)
             ], 200);
         } 
         catch (\Throwable $th) {
             return response()->json([
-                'message' => 'Token không hợp lệ'
+                'message' => 'Token không hợp lệ',
+                'status' => 401
             ], 401);
         }
     }
