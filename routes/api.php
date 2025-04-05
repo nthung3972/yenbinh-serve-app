@@ -11,6 +11,7 @@ use App\Http\Controllers\ApiAdmin\InvoiceController;
 use App\Http\Controllers\ApiAdmin\VehicleController;
 use App\Http\Controllers\ApiAdmin\StaffController;
 use App\Http\Controllers\ApiAdmin\ImageUploadController;
+use App\Http\Controllers\ApiAdmin\PasswordChangeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,8 @@ Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
         Route::get('/verify/{token}', [AuthController::class, 'verify']);
+        Route::post('/forgot-password', [PasswordChangeController::class, 'forgotPassword']);
+        Route::post('/reset-password', [PasswordChangeController::class, 'resetPassword']);
     });
 
     Route::group(['middleware' => 'check_auth', 'cors', 'verified'], function () {
@@ -38,6 +41,9 @@ Route::group(['prefix' => 'admin'], function () {
         //user
         Route::group(['prefix' => 'me'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
+            Route::post('/password-change-request', [PasswordChangeController::class, 'requestChange']);
+            Route::post('/password-change-verify', [PasswordChangeController::class, 'verifyChange']);
+            Route::post('/resend-password-change', [PasswordChangeController::class, 'resendPasswordChange'])->middleware(['auth:api', 'throttle_resend']);
         });
 
         //upload
