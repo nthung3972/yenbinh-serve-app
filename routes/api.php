@@ -29,6 +29,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('login', [AuthController::class, 'login']);
         Route::get('/verify/{token}', [AuthController::class, 'verify']);
         Route::post('/forgot-password', [PasswordChangeController::class, 'forgotPassword']);
+        Route::post('/forgot-password/resend', [PasswordChangeController::class, 'resendForgotPassword'])->middleware('throttle:2,1');
         Route::post('/reset-password', [PasswordChangeController::class, 'resetPassword']);
     });
 

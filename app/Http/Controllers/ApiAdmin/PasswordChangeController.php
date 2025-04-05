@@ -125,9 +125,8 @@ class PasswordChangeController extends Controller
             'email' => 'required|email',
             'token' => 'required',
             'password' => 'required|min:6|confirmed',
+            'password_confirmation' => 'required|min:6',
         ]);
-
-
 
         $checkResetToken = $this->userService->checkResetToken($request->email, $request->token);
         if (!$checkResetToken ||!Hash::check($request->token, $checkResetToken->token)) {
@@ -147,5 +146,30 @@ class PasswordChangeController extends Controller
         }
     
         return response()->json(['message' => 'Đặt lại mật khẩu thành công']);
+    }
+
+    /**
+     * Gửi lại link quên mật khẩu
+     */
+    public function resendForgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = $this->userService->getUserByEmail($request->email);
+        if (!$user) {
+            return response()->json(['message' => 'Email không tồn tại'], 404);
+        }
+        // Tạo token
+        $token = Str::random(64);
+
+        // Lưu token vào bảng password_resets
+        $createForgotToken = $this->userService->createForgotToken($user->email, $token);
+        if (!$createForgotToken) {
+            return response()->json(['message' => 'Không thể tạo token'], 500);
+        }
+
+        // Gửi email chứa link reset
+        Mail::to($user->email)->send(new \App\Mail\SendLinkForgotPasswordMail($user, $token));
+
+        return response()->json(['message' => 'Đã gửi lại link đặt lại mật khẩu, vui lòng kiểm tra email của bạn']);
     }
 }
