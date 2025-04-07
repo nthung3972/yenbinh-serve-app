@@ -67,4 +67,31 @@ class Building extends Model
     {
         return $this->belongsToMany(User::class, 'staff_assignments', 'building_id', 'staff_id');
     }
+
+    public function shiftReports()
+    {
+        return $this->hasManyThrough(
+            ShiftReport::class,
+            DailyReport::class,
+            'building_id', // Khóa ngoại trong bảng daily_reports trỏ tới buildings
+            'daily_report_id', // Khóa chính trong bảng shift_reports
+            'building_id', // Khóa chính trong bảng buildings
+            'daily_report_id' // Khóa chính trong bảng daily_reports
+        );
+    }
+
+    public function dailyReports()
+    {
+        return $this->hasMany(DailyReport::class, 'building_id', 'building_id');
+    }
+
+    public function buildingShifts()
+    {
+        return $this->hasMany(BuildingShift::class, 'building_id', 'building_id');
+    }
+
+    public function buildingPersonnel()
+    {
+        return $this->hasMany(BuildingPersonnel::class, 'building_id', 'building_id');
+    }
 }

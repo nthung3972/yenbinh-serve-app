@@ -45,6 +45,7 @@ class AuthController extends Controller
             }
 
             $userInfo = [
+                'id' => auth('api')->user()->id,
                 'name' => auth('api')->user()->name,
                 'email' => auth('api')->user()->email,
                 'role' => auth('api')->user()->role,

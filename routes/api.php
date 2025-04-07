@@ -12,6 +12,7 @@ use App\Http\Controllers\ApiAdmin\VehicleController;
 use App\Http\Controllers\ApiAdmin\StaffController;
 use App\Http\Controllers\ApiAdmin\ImageUploadController;
 use App\Http\Controllers\ApiAdmin\PasswordChangeController;
+use App\Http\Controllers\ApiAdmin\DailyReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -112,7 +113,10 @@ Route::group(['prefix' => 'admin'], function () {
         });
     });
 
-    // Route::group(['middleware' => 'auth_staff', 'cors'], function () {
-        
-    // });
+    Route::group(['middleware' => 'auth_staff', 'cors'], function () {
+        //report
+        Route::group(['prefix' => 'report'], function () {
+            Route::get('/form-info/{id}', [DailyReportController::class, 'getFormInfo']);
+        });
+    });
 });
