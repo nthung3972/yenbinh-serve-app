@@ -40,4 +40,14 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
             'role' => $this->role, // Thêm role vào token
         ];
     }
+
+    public function dailyReports()
+    {
+        return $this->hasMany(DailyReport::class, 'created_by');
+    }
+
+    public function shiftReports()
+    {
+        return $this->hasMany(ShiftReport::class, 'created_by');
+    }
 }
