@@ -111,6 +111,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create-staff', [StaffController::class, 'createStaff']);
             Route::delete('/delete-staff/{id}', [StaffController::class, 'deleteStaff']);
         });
+
+        //report
+        Route::group(['prefix' => 'admin-report'], function () {
+            Route::get('/daily-reports', [DailyReportController::class, 'getAllReports']);
+        });
     });
 
     Route::group(['middleware' => 'auth_staff', 'cors'], function () {

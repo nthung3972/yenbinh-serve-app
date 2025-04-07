@@ -33,7 +33,7 @@ class ShiftReport extends Model
 
     public function createdBy()
     {
-        return $this->belongsTo(User::class, 'created_by', 'user_id');
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
     public function shiftReportStaff()

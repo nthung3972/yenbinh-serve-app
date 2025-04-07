@@ -135,4 +135,56 @@ class DailyReportController extends Controller
             ], 500);
         }
     }
+
+    public function getAllReports(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $buildingId = $request->input('building_id');
+        $status = $request->input('status');
+        $reportDateFrom = $request->input('report_date_from');
+        $reportDateTo = $request->input('report_date_to');
+
+        $query  = DailyReport::with(['building', 'createdBy', 'shiftReports.shiftReportStaff'])
+            ->latest('report_date');
+
+        // Lọc theo building và status
+        $query ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+                ->when($status, fn($q) => $q->where('status', $status));
+
+        // Chỉ cần lọc theo khoảng ngày
+        if ($reportDateFrom && $reportDateTo) {
+            // Nếu muốn lọc chính xác 1 ngày, truyền cùng giá trị cho from và to
+            $query->whereBetween('report_date', [$reportDateFrom, $reportDateTo]);
+        } elseif ($reportDateFrom) {
+            $query->where('report_date', '>=', $reportDateFrom);
+        } elseif ($reportDateTo) {
+            $query->where('report_date', '<=', $reportDateTo);
+        };
+            
+        $reports = $query->paginate($perPage);
+
+        // Biến đổi dữ liệu trong collection trước khi trả ra
+        $reports->getCollection()->transform(function ($report) {
+            $totalShifts = $report->shiftReports ? $report->shiftReports->count() : 0;
+            $totalStaff = $report->shiftReports
+                ? $report->shiftReports->sum(function ($shift) {
+                    return $shift->shiftStaff ? $shift->shiftStaff->count() : 0;
+                })
+                : 0;
+
+            return [
+                'report_id' => $report->daily_report_id,
+                'building' => $report->building->name ?? null,
+                'report_date' => $report->report_date,
+                'created_by' => $report->createdBy->name ?? null,
+                'status' => $report->status,
+                'notes' => $report->notes,
+                'total_shifts' => $totalShifts,
+                'total_staff' => $totalStaff,
+                'created_at' => $report->created_at->toDateTimeString()
+            ];
+        });
+
+        return response()->json($reports);
+    }
 }
