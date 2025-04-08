@@ -12,6 +12,7 @@ use App\Models\ShiftReportStaff;
 use App\Models\StaffAssignment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\StaffReportRequest\CreateDailyReport;
 
 class DailyReportController extends Controller
 {
@@ -64,16 +65,9 @@ class DailyReportController extends Controller
         ]);
     }
 
-    public function createDailyReport(Request $request)
+    public function createDailyReport(CreateDailyReport $request)
     {
         $user = Auth::user();
-
-        $request->validate([
-            'building_id' => 'required|exists:buildings,building_id',
-            'report_date' => 'required|date|unique:daily_reports,report_date',
-            'notes' => 'nullable|string',
-            'shifts' => 'required|array|min:1',
-        ]);
 
         // 1. Kiểm tra quyền của staff với tòa nhà
         $hasAccess = StaffAssignment::where('staff_id', $user->id)
@@ -160,7 +154,8 @@ class DailyReportController extends Controller
         } elseif ($reportDateTo) {
             $query->where('report_date', '<=', $reportDateTo);
         };
-            
+        
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $reports */
         $reports = $query->paginate($perPage);
 
         // Biến đổi dữ liệu trong collection trước khi trả ra
@@ -168,7 +163,7 @@ class DailyReportController extends Controller
             $totalShifts = $report->shiftReports ? $report->shiftReports->count() : 0;
             $totalStaff = $report->shiftReports
                 ? $report->shiftReports->sum(function ($shift) {
-                    return $shift->shiftStaff ? $shift->shiftStaff->count() : 0;
+                    return $shift->shiftReportStaff ? $shift->shiftReportStaff->count() : 0;
                 })
                 : 0;
 
@@ -182,6 +177,85 @@ class DailyReportController extends Controller
                 'total_shifts' => $totalShifts,
                 'total_staff' => $totalStaff,
                 'created_at' => $report->created_at->toDateTimeString()
+            ];
+        });
+
+        return response()->json($reports);
+    }
+
+    public function getDailyReportDetail($id)
+    {
+        $report = DailyReport::with([
+            'building',
+            'createdBy',
+            'shiftReports.shift',
+            'shiftReports.shiftReportStaff.buildingPersonnel'
+        ])->where('daily_report_id', $id)->firstOrFail();
+
+        return response()->json([
+            'daily_report_id' => $report->daily_report_id,
+            'building' => $report->building->name ?? null,
+            'report_date' => $report->report_date,
+            'created_by' => $report->createdBy->name ?? null,
+            'status' => $report->status,
+            'notes' => $report->notes,
+            'shifts' => $report->shiftReports->map(function ($shiftReport) {
+                return [
+                    'shift_report_id' => $shiftReport->shift_report_id,
+                    'shift_id' => $shiftReport->shift_id,
+                    'shift_name' => $shiftReport->shift->name ?? null,
+                    'start_time' => $shiftReport->shift->start_time ?? null,
+                    'end_time' => $shiftReport->shift->end_time ?? null,
+                    'status' => $shiftReport->status,
+                    'notes' => $shiftReport->notes,
+                    'staffs' => $shiftReport->shiftReportStaff->map(function ($staff) {
+                        return [
+                            'shift_report_staff_id' => $staff->shift_report_staff_id,
+                            'building_personnel_id' => $staff->building_personnel_id,
+                            'status' => $staff->status,
+                            'working_hours' => $staff->working_hours,
+                            'performance_note' => $staff->performance_note,
+                            // Lấy thêm thông tin nhân viên
+                            'personnel_name' => $staff->buildingPersonnel->personnel_name ?? null,
+                            'position' => $staff->buildingPersonnel->position ?? null,
+                            'phone' => $staff->buildingPersonnel->personnel_phone ?? null,
+                            'email' => $staff->buildingPersonnel->personnel_address ?? null,
+                        ];
+                    }),
+                ];
+            }),
+        ]);
+    }
+
+    public function getReportsByStaff(Request $request)
+    {
+        $user = auth()->user();
+
+        $reportDateFrom = $request->input('report_date_from');
+        $reportDateTo = $request->input('report_date_to');
+
+        $query = DailyReport::with('building', 'shiftReports.shiftReportStaff')
+            ->where('created_by', $user->id);
+
+        if ($reportDateFrom && $reportDateTo) {
+            $query->whereBetween('report_date', [$reportDateFrom, $reportDateTo]);
+        } elseif ($reportDateFrom) {
+            $query->whereDate('report_date', '>=', $reportDateFrom);
+        } elseif ($reportDateTo) {
+            $query->whereDate('report_date', '<=', $reportDateTo);
+        }
+
+        $reports = $query->orderByDesc('report_date')->paginate(10);
+
+        $reports->getCollection()->transform(function ($report) {
+            return [
+                'daily_report_id' => $report->daily_report_id,
+                'report_date' => $report->report_date,
+                'status' => $report->status,
+                'notes' => $report->notes,
+                'building_name' => $report->building->name ?? null,
+                'shift_count' => $report->shiftReports->count(),
+                'staff_count' => $report->shiftReports->sum(fn ($shift) => $shift->shiftReportStaff->count()),
             ];
         });
 
