@@ -13,6 +13,7 @@ use App\Models\StaffAssignment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StaffReportRequest\CreateDailyReport;
+use App\Http\Requests\StaffReportRequest\UpdateDailyReport;
 
 class DailyReportController extends Controller
 {
@@ -107,7 +108,7 @@ class DailyReportController extends Controller
                     ShiftReportStaff::create([
                         'shift_report_id' => $shiftReport->shift_report_id,
                         'building_personnel_id' => $person['id'],
-                        'status' => 'present', // mặc định là 'present'
+                        'status' => 'present',
                         'working_hours' => null,
                         'performance_note' => null,
                     ]);
@@ -184,13 +185,50 @@ class DailyReportController extends Controller
     }
 
     public function getDailyReportDetail($id)
-    {
+    {   
+        $currentUser = auth()->user();
+
         $report = DailyReport::with([
             'building',
             'createdBy',
             'shiftReports.shift',
             'shiftReports.shiftReportStaff.buildingPersonnel'
         ])->where('daily_report_id', $id)->firstOrFail();
+
+        if ($currentUser->role !== 'admin' && $report->created_by !== $currentUser->id) {
+            return response()->json(['message' => 'Bạn không có sửa báo cáo này.'], 403);
+        }
+        
+        $shifts = $report->shiftReports->map(function ($shiftReport) {
+            return [
+                'shift_report_id' => $shiftReport->shift_report_id,
+                'shift_id' => $shiftReport->shift_id,
+                'shift_name' => $shiftReport->shift->name ?? null,
+                'start_time' => $shiftReport->shift->start_time ?? null,
+                'end_time' => $shiftReport->shift->end_time ?? null,
+                'status' => $shiftReport->status,
+                'notes' => $shiftReport->notes,
+                'staffs' => $shiftReport->shiftReportStaff->map(function ($staff) {
+                    return [
+                        'shift_report_staff_id' => $staff->shift_report_staff_id,
+                        'building_personnel_id' => $staff->building_personnel_id,
+                        'status' => $staff->status,
+                        'working_hours' => $staff->working_hours,
+                        'performance_note' => $staff->performance_note,
+                        'personnel_name' => $staff->buildingPersonnel->personnel_name ?? null,
+                        'position' => $staff->buildingPersonnel->position ?? null,
+                        'phone' => $staff->buildingPersonnel->personnel_phone ?? null,
+                        'email' => $staff->buildingPersonnel->personnel_address ?? null,
+                    ];
+                }),
+            ];
+        });
+
+        // Thêm tổng số ca trực và tổng số nhân viên
+        $totalShifts = $shifts->count();
+        $totalStaffs = $shifts->sum(function ($shift) {
+            return $shift['staffs']->count();
+        });
 
         return response()->json([
             'daily_report_id' => $report->daily_report_id,
@@ -199,31 +237,9 @@ class DailyReportController extends Controller
             'created_by' => $report->createdBy->name ?? null,
             'status' => $report->status,
             'notes' => $report->notes,
-            'shifts' => $report->shiftReports->map(function ($shiftReport) {
-                return [
-                    'shift_report_id' => $shiftReport->shift_report_id,
-                    'shift_id' => $shiftReport->shift_id,
-                    'shift_name' => $shiftReport->shift->name ?? null,
-                    'start_time' => $shiftReport->shift->start_time ?? null,
-                    'end_time' => $shiftReport->shift->end_time ?? null,
-                    'status' => $shiftReport->status,
-                    'notes' => $shiftReport->notes,
-                    'staffs' => $shiftReport->shiftReportStaff->map(function ($staff) {
-                        return [
-                            'shift_report_staff_id' => $staff->shift_report_staff_id,
-                            'building_personnel_id' => $staff->building_personnel_id,
-                            'status' => $staff->status,
-                            'working_hours' => $staff->working_hours,
-                            'performance_note' => $staff->performance_note,
-                            // Lấy thêm thông tin nhân viên
-                            'personnel_name' => $staff->buildingPersonnel->personnel_name ?? null,
-                            'position' => $staff->buildingPersonnel->position ?? null,
-                            'phone' => $staff->buildingPersonnel->personnel_phone ?? null,
-                            'email' => $staff->buildingPersonnel->personnel_address ?? null,
-                        ];
-                    }),
-                ];
-            }),
+            'total_shifts' => $totalShifts,
+            'total_staffs' => $totalStaffs,
+            'shifts' => $shifts,
         ]);
     }
 
@@ -233,9 +249,13 @@ class DailyReportController extends Controller
 
         $reportDateFrom = $request->input('report_date_from');
         $reportDateTo = $request->input('report_date_to');
+        $status = $request->input('status');
 
         $query = DailyReport::with('building', 'shiftReports.shiftReportStaff')
             ->where('created_by', $user->id);
+
+        // Lọc theo building và status
+        $query ->when($status, fn($q) => $q->where('status', $status));
 
         if ($reportDateFrom && $reportDateTo) {
             $query->whereBetween('report_date', [$reportDateFrom, $reportDateTo]);
@@ -260,5 +280,125 @@ class DailyReportController extends Controller
         });
 
         return response()->json($reports);
+    }
+
+    public function updateDailyReport(UpdateDailyReport $request, $id)
+    {
+        $user = Auth::user();
+
+        $dailyReport = DailyReport::where('daily_report_id', $id)->firstOrFail();
+
+        if ($user->role !== 'admin' && $dailyReport->created_by !== $user->id) {
+            return response()->json(['message' => 'Bạn không có sửa báo cáo này.'], 403);
+        }
+
+        $hasAccess = StaffAssignment::where('staff_id', $user->id)
+            ->where('building_id', $request->building_id)
+            ->exists();
+
+        if (!$hasAccess) {
+            return response()->json(['message' => 'Bạn không có quyền truy cập tòa nhà này.'], 403);
+        }
+
+        if ($dailyReport->status !== 'draft') {
+            return response()->json(['message' => 'Báo cáo này đã được cập nhật hoặc không thể chỉnh sửa.'], 400);
+        }
+
+        $validated = $request->validated();
+
+        DB::beginTransaction();
+
+        try {
+            $dailyReport->update([
+                'building_id' => $validated['building_id'],
+                'report_date' => $validated['report_date'],
+                'notes' => $validated['notes'],
+                'status' => 'submitted',
+            ]);
+
+           // Xóa ShiftReportStaff và ShiftReport cũ
+            $shiftReportIds = ShiftReport::where('daily_report_id', $dailyReport->daily_report_id)
+                ->pluck('shift_report_id');
+            ShiftReportStaff::whereIn('shift_report_id', $shiftReportIds)->delete();
+            ShiftReport::where('daily_report_id', $dailyReport->daily_report_id)->delete();
+
+            // Tạo lại các ShiftReport
+            foreach ($validated['shifts'] as $shiftData) {
+                $shiftReport = ShiftReport::create([
+                    'daily_report_id' => $dailyReport->daily_report_id,
+                    'shift_id' => $shiftData['shiftId'],
+                    'created_by' => $user->id,
+                    'notes' => null,
+                    'status' => 'completed',
+                ]);
+
+                foreach ($shiftData['staffList'] as $person) {
+                    ShiftReportStaff::create([
+                        'shift_report_id' => $shiftReport->shift_report_id,
+                        'building_personnel_id' => $person['id'],
+                        'status' => 'present',
+                        'working_hours' => $person['workTimeStart'] && $person['workTimeEnd'] 
+                            ? $this->calculateWorkingHours($person['workTimeStart'], $person['workTimeEnd']) 
+                            : null,
+                        'performance_note' => $person['performanceNote'] ?? null,
+                        'is_late' => $person['isLate'] ?? false,
+                        'is_overtime' => $person['isOvertime'] ?? false,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Cập nhật báo cáo ngày thành công',
+                'data' => $dailyReport->load('shiftReports.shiftReportStaff'),
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi khi cập nhật báo cáo',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function deleteDailyReport($id) {
+        $dailyReport = DailyReport::where('daily_report_id', $id)->firstOrFail();
+        DB::beginTransaction();
+        try {
+            // Xóa ShiftReportStaff và ShiftReport cũ
+            $shiftReportIds = ShiftReport::where('daily_report_id', $dailyReport->daily_report_id)
+                ->pluck('shift_report_id');
+
+            ShiftReportStaff::whereIn('shift_report_id', $shiftReportIds)->delete();
+
+            ShiftReport::where('daily_report_id', $dailyReport->daily_report_id)->delete();
+
+            $dailyReport->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Xóa báo cáo ngày thành công',
+                'data' => [],
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi khi xóa báo cáo',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+    }
+
+    public function calculateWorkingHours($start, $end)
+    {
+        $startTime = new \DateTime($start);
+        $endTime = new \DateTime($end);
+        $interval = $startTime->diff($endTime);
+        return $interval->h + ($interval->i / 60);
     }
 }

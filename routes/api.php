@@ -116,6 +116,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'admin-report'], function () {
             Route::get('/daily-reports', [DailyReportController::class, 'getAllReports']);
             Route::get('/daily-report/{id}', [DailyReportController::class, 'getDailyReportDetail']);
+            Route::delete('/delete-daily-report/{id}', [DailyReportController::class,'deleteDailyReport']);
         });
     });
 
@@ -125,6 +126,8 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/form-info/{id}', [DailyReportController::class, 'getFormInfo']);
             Route::post('/daily-reports', [DailyReportController::class, 'createDailyReport']);
             Route::get('/daily-reports-by-staff', [DailyReportController::class, 'getReportsByStaff']);
+            Route::get('/daily-report/{id}', [DailyReportController::class, 'getDailyReportDetail']);
+            Route::put('/update-daily-report/{id}', [DailyReportController::class, 'updateDailyReport']);
         });
     });
 });
