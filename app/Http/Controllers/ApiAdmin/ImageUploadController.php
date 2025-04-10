@@ -5,16 +5,12 @@ namespace App\Http\Controllers\ApiAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helper\Response;
+use App\Http\Requests\UploadFileRequest\UploadImageRequest;
 
 class ImageUploadController extends Controller
 {
-    public function upload(Request $request)
+    public function upload(UploadImageRequest $request)
     {
-        // Validate file
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
         if ($request->hasFile('image')) {
             $file = $request->file('image');
 
@@ -31,25 +27,22 @@ class ImageUploadController extends Controller
             $supabase = app('supabase');
 
             try {
+                $oldAvatar = $request->input('old_avatar'); 
+                
+                if ($oldAvatar) {
+                    $oldFileName = basename($oldAvatar);
+                    $supabase->__getStorage()->from('images')->remove([$oldFileName]);
+                }
+
                 $result = $supabase->__getStorage()->from('images')->upload(
                     $fileName,
                     $fileContent,
                     ['contentType' => $file->getMimeType()]
                 );
 
-                $fileUrl = $supabase->__getStorage()->from('images')->getPublicUrl($fileName);
-                // return response()->json([
-                //     'success' => true,
-                //     'message' => 'Image uploaded successfully',
-                //     'path' => $fileUrl,
-                //     'filename' => $fileName // Trả về tên file đã upload
-                // ]);
+                $fileUrl = $supabase->__getStorage()->from('images')->getPublicUrl('/'.$fileName);
                 return Response::data(['path' => $fileUrl]);
             } catch (\Throwable $th) {
-                // return response()->json([
-                //     'success' => false,
-                //     'message' => 'Upload failed: ' . $e->getMessage(),
-                // ], 500);
                 return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
             }
         }

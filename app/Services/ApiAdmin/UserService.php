@@ -142,4 +142,16 @@ class UserService
     {
         return DB::table('password_reset_tokens')->where('email', $email)->delete();
     }
+
+    public function update($id, $request)
+    {
+        $user = User::findOrFail($id);
+        return $user->update([
+            'name'=> $request['name'],
+            'gender'=> $request['gender'],
+            'phone_number'=> $request['phone_number'],
+            'date_of_birth'=> $request['date_of_birth'],
+            'avatar'=> $request['avatar']
+        ]);
+    }
 }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Requests\UserRequest\UpdateProfileRequest;
 
 class AuthController extends Controller
 {
@@ -49,6 +50,7 @@ class AuthController extends Controller
                 'name' => auth('api')->user()->name,
                 'email' => auth('api')->user()->email,
                 'role' => auth('api')->user()->role,
+                'avatar' => auth('api')->user()->avatar,
                 'email_verified_at' => auth('api')->user()->email_verified_at,
             ];
             return Response::data(['token' => $login['token'], 'user' => $userInfo]);
@@ -168,4 +170,43 @@ class AuthController extends Controller
             ], 401);
         }
     }
+
+    /**
+     * Lấy thông tin profile
+     */
+    public function profile()
+    {
+        try {
+            $user = auth()->user();
+            $info = [
+                'name'=> $user->name,
+                'email'=> $user->email,
+                'gender'=> $user->gender,
+                'avatar'=> $user->avatar,
+                'phone_number'=> $user->phone_number,
+                'address'=> $user->address,
+                'date_of_birth' => $user->date_of_birth,
+            ];
+            return Response::data(['user' => $info]);
+        } catch (\Throwable $th) {
+           return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    /**
+     * Update profile
+     */
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        try {
+            $user = auth()->user();
+            $updated = $this->userService->update($user->id, $request->only('name', 'gender','phone_number', 'date_of_birth', 'avatar'));
+            if ($updated) {
+                return Response::data(['user' => $updated]);
+            }
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+         }
+    }
+
 }

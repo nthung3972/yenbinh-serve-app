@@ -42,6 +42,8 @@ Route::group(['prefix' => 'admin'], function () {
         
         //user
         Route::group(['prefix' => 'me'], function () {
+            Route::get('/profile', [AuthController::class,'profile']);
+            Route::put('profile-update', [AuthController::class,'updateProfile']);
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::post('/password-change-request', [PasswordChangeController::class, 'requestChange']);
             Route::post('/password-change-verify', [PasswordChangeController::class, 'verifyChange']);
