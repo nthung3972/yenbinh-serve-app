@@ -55,7 +55,11 @@ class InvoiceController extends Controller
             $invoices = $this->invoiceService->show($id);
             return Response::data(['data' => $invoices]);
         } catch (\Throwable $th) {
-            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Login failed: ' . $th->getMessage(),
+            ], 500);
+            // return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
 
