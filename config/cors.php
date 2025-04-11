@@ -25,7 +25,9 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => [
+        'Content-Disposition', // Quan trọng để frontend đọc tên file
+    ],
 
     'max_age' => 0,
 

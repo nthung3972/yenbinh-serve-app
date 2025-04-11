@@ -65,7 +65,7 @@ class InvoiceRepository
 
     public function show(int $id)
     {
-        $invoice = Invoice::with('invoiceDetails', 'apartment')->find($id);
+        $invoice = Invoice::with('invoiceDetails', 'apartment', 'updatedBy')->find($id);
 
         if (!$invoice) {
             // Ném ra một exception khi không tìm thấy hóa đơn
@@ -75,7 +75,8 @@ class InvoiceRepository
         $detai = [
             'invoice_id' => $invoice->invoice_id,
             'apartment_id' => $invoice->apartment_id,
-            'apartment_number' => $invoice->apartment ? $invoice->apartment->apartment_number : null,
+            'apartment_number' => $invoice->apartment ? $invoice->apartment->apartment_number : '',
+            'updated_by' =>$invoice->updatedBy ? $invoice->updatedBy->name : '',
             'invoice_date' => $invoice->invoice_date,
             'due_date' => $invoice->due_date,
             'status' => $invoice->status,

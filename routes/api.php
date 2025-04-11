@@ -13,6 +13,7 @@ use App\Http\Controllers\ApiAdmin\StaffController;
 use App\Http\Controllers\ApiAdmin\ImageUploadController;
 use App\Http\Controllers\ApiAdmin\PasswordChangeController;
 use App\Http\Controllers\ApiAdmin\DailyReportController;
+use App\Http\Controllers\ApiAdmin\ExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,10 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('/forgot-password', [PasswordChangeController::class, 'forgotPassword']);
         Route::post('/forgot-password/resend', [PasswordChangeController::class, 'resendForgotPassword'])->middleware('throttle:2,1');
         Route::post('/reset-password', [PasswordChangeController::class, 'resetPassword']);
+
+        Route::group(['prefix' => 'export'], function () {
+            Route::get('/invoices/{id}', [ExportController::class, 'exportPrintable']);
+        });
     });
 
     Route::group(['middleware' => 'check_auth', 'cors', 'verified'], function () {
@@ -94,6 +99,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create', [VehicleController::class, 'create']);
             Route::get('/edit/{id}', [VehicleController::class, 'edit']);
             Route::post('/update/{id}', [VehicleController::class, 'update']);
+        });
+
+        //Export
+        Route::group(['prefix' => 'export'], function () {
+            Route::get('/invoices/{id}', [ExportController::class, 'exportPrintable']);
         });
     });
 
