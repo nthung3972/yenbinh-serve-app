@@ -16,7 +16,10 @@ class InvoiceService
         return $this->invoiceRepository->getInvoicesByBuilding(
             $id, 
             $request->per_page ?? config('constant.paginate'),
-            $request->keyword
+            $request->keyword,
+            $request->status,
+            $request->invoice_date_from,
+            $request->invoice_date_to,
         );
     }
 

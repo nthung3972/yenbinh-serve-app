@@ -10,10 +10,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class InvoiceRepository
 {
-    public function getInvoicesByBuilding($building_id, $perPage = '', $keyword = null)
+    public function getInvoicesByBuilding($building_id, $perPage = '', $keyword = null, $status = null, $invoice_date_from = null, $invoice_date_to = null)
     {
-        $query = Invoice::with('updatedBy')->where('building_id', $building_id)
-            ->with('apartment') // Load thông tin căn hộ
+        $query = Invoice::with(['updatedBy', 'apartment']) // Load thông tin liên quan
+            ->where('building_id', $building_id)
             ->orderBy('invoice_date', 'desc');
 
         // Tìm kiếm theo tên căn hộ nếu có keyword
@@ -23,10 +23,23 @@ class InvoiceRepository
             });
         }
 
-        // Phân trang
-        $invoices = $query->paginate($perPage);
+        // Lọc theo trạng thái nếu có
+        if (!is_null($status)) {
+            $query->where('status', $status);
+        }
 
-        return $invoices;
+        // Lọc từ ngày hóa đơn
+        if (!empty($invoice_date_from)) {
+            $query->whereDate('invoice_date', '>=', $invoice_date_from);
+        }
+
+        // Lọc đến ngày hóa đơn
+        if (!empty($invoice_date_to)) {
+            $query->whereDate('invoice_date', '<=', $invoice_date_to);
+        }
+
+        // Phân trang
+        return $query->paginate($perPage);
     }
 
     public function create(array $request)
@@ -76,7 +89,7 @@ class InvoiceRepository
             'invoice_id' => $invoice->invoice_id,
             'apartment_id' => $invoice->apartment_id,
             'apartment_number' => $invoice->apartment ? $invoice->apartment->apartment_number : '',
-            'updated_by' =>$invoice->updatedBy ? $invoice->updatedBy->name : '',
+            'updated_by' => $invoice->updatedBy ? $invoice->updatedBy->name : '',
             'invoice_date' => $invoice->invoice_date,
             'due_date' => $invoice->due_date,
             'status' => $invoice->status,
@@ -94,6 +107,10 @@ class InvoiceRepository
 
         if (!$invoice) {
             throw new \Exception('Hóa đơn không tồn tại', 404);
+        }
+
+        if ($invoice->status == 1) {
+            throw new \Exception('Hóa đơn đã thanh toán không thể sửa!', 404);
         }
 
         $invoice->update([
