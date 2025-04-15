@@ -53,7 +53,7 @@ class ApartmentRepository
 
     public function getApartmentDetail(int $id)
     {
-        $apartment = Apartment::where('apartment_id', $id)->get();
+        $apartment = Apartment::with('residents')->where('apartment_id', $id)->get();
         return $apartment;
     }
 

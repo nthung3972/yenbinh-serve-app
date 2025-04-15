@@ -25,7 +25,9 @@ class Apartment extends Model
 
     public function residents()
     {
-        return $this->belongsToMany(Resident::class, 'apartment_resident', 'apartment_id', 'resident_id');
+        return $this->belongsToMany(Resident::class, 'apartment_resident', 'apartment_id', 'resident_id')
+        ->withTimestamps()
+        ->withPivot('role_in_apartment', 'registration_date', 'registration_status', 'move_out_date', 'notes');
     }
 
     public function building()
