@@ -16,7 +16,9 @@ class ApartmentService
         return $this->apartmentRepository->getListByBuilding(
             $id, 
             $request->per_page ?? config('constant.paginate'),
-            $request->keyword
+            $request->keyword,
+            $request->apartment_type,
+            $request->status
         );
     }
 
