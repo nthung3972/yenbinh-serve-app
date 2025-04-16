@@ -94,4 +94,9 @@ class Building extends Model
     {
         return $this->hasMany(BuildingPersonnel::class, 'building_id', 'building_id');
     }
+
+    public function buildingVehicleFees()
+    {
+        return $this->hasMany(BuildingVehicleFee::class, 'building_id', 'building_id');
+    }
 }

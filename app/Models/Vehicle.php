@@ -65,4 +65,9 @@ class Vehicle extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function vehicleType()
+    {
+        return $this->belongsTo(VehicleType::class, 'vehicle_type_id', 'vehicle_type_id');
+    }
 }

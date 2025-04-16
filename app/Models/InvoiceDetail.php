@@ -25,4 +25,9 @@ class InvoiceDetail extends Model
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
+
+    public function feeTypes()
+    {
+        return $this->belongsTo(FeeType::class, 'fee_type_id', 'fee_type_id');
+    }
 }
