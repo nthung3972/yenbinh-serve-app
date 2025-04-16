@@ -10,12 +10,25 @@ use Carbon\Carbon;
 
 class ApartmentRepository
 {
-    public function getListByBuilding($id, $perPage = '', $keyword = null)
+    public function getListByBuilding($id, $perPage = '', $keyword = null, $apartment_type = null, $status = null)
     {
         $query = Apartment::with('updatedBy')->where('building_id', $id);
+
         if (!empty($keyword)) {
             $query->where('apartment_number', 'LIKE', "%$keyword%");
         }
+        if (!is_null($apartment_type)) {
+            $query->where('ownership_type', $apartment_type);
+        }
+
+        if (!empty($status)) {
+            if ($status === 'occupied') {
+                $query->whereHas('residents'); 
+            } elseif ($status === 'vacant') {
+                $query->whereDoesntHave('residents');
+            }
+        }
+
         $query->orderBy('created_at', 'desc');
         $apartments = $query->with('residents')
             ->paginate($perPage);

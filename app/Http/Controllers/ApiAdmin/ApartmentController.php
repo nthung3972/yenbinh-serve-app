@@ -11,6 +11,7 @@ use App\Helper\Response;
 use Illuminate\Http\Request;
 use App\Http\Requests\ApartmentRequest\CreateApartmentRequest;
 use App\Http\Requests\ApartmentRequest\UpdateApartmentStatusRequest;
+use App\Models\Apartment;
 use Illuminate\Support\Carbon;
 
 class ApartmentController extends Controller
@@ -67,35 +68,29 @@ class ApartmentController extends Controller
         }
     }
 
-    public function addMultipleResidents(AddMultipleResidentRequest $request, $id)
+    public function getApartmentCode($id) 
     {
-        // try {         
-        //     $create = $this->apartmentService->addMultipleResidents($request->residents , $id);
-        //     return Response::data(['data' => $create]);
-        // } catch (\Throwable $th) {
-        //     return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
-        // }
-
-
-        $createdResidents = [];
-
-        foreach ($request->all() as $residentData) {
-            $resident = Resident::create($residentData);
-
-            ApartmentResident::create([
-                'apartment_id' => $id,
-                'resident_id' => $resident->resident_id,
-                'role_in_apartment' => $residentData['resident_type'],
-                'registration_date' => $residentData['registration_date'],
-                'registration_status' => $residentData['registration_status']
-            ]);
-
-            $createdResidents[] = $resident;
+        try {
+            $apartments =  Apartment::select('apartment_id', 'apartment_number')->where('building_id', $id)->get();
+            return Response::data(['data' => $apartments]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
+    }
 
-        return response()->json([
-            'message' => 'Đã thêm tất cả cư dân thành công',
-            'residents' => $createdResidents
-        ], 201);
+    public function getResidentsByApartment($code)
+    {
+        try {
+            $apartment = Apartment::where('apartment_number', $code)->firstOrFail();
+            $residents = $apartment->residents->map(function ($resident) {
+                return [
+                    'resident_id' => $resident->resident_id,
+                    'full_name' => $resident->full_name,
+                ];
+            });
+            return Response::data(['data' => $residents]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
     }
 }

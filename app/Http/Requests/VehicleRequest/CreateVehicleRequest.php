@@ -23,12 +23,17 @@ class CreateVehicleRequest extends FormRequest
     {
         return [
             '*.building_id' => 'required|exists:buildings,building_id',
+            '*.resident_id' => 'required|exists:residents,resident_id',
             '*.apartment_number' => 'required',
             '*.license_plate' => 'required|unique:vehicles,license_plate',
             '*.vehicle_type' => 'required|string|in:car,motorbike,bicycle',
             '*.parking_slot' => 'nullable|string',
             '*.created_at' => 'required|date',
-            '*.status' => 'required|integer|in:0,1'
+            '*.status' => 'required|integer|in:0,1',
+            '*.vehicle_company' => 'required|string',
+            '*.vehicle_model' => 'required|string',
+            '*.vehicle_color' => 'required|string',
+
         ];
     }
 }

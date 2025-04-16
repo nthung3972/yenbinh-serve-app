@@ -14,7 +14,7 @@ class Vehicle extends Model
 
     protected $primaryKey = 'vehicle_id';
 
-    protected $appends = ['apartment_number'];
+    protected $appends = ['apartment_number', 'full_name'];
 
     protected $fillable = [
         'license_plate',
@@ -22,8 +22,13 @@ class Vehicle extends Model
         'parking_slot',
         'status',
         'apartment_id',
+        'resident_id',
         'building_id',
-        'updated_by'
+        'updated_by',
+        'inactive_date',
+        'vehicle_company',
+        'vehicle_model',
+        'vehicle_color'
     ];
 
     public function apartment()
@@ -31,9 +36,19 @@ class Vehicle extends Model
         return $this->belongsTo(Apartment::class, 'apartment_id', 'apartment_id');
     }
 
+    public function resident()
+    {
+        return $this->belongsTo(Resident::class, 'resident_id', 'resident_id');
+    }
+
     public function building()
     {
         return $this->belongsTo(Building::class, 'building_id', 'building_id');
+    }
+
+    public function getFullNameAttribute()
+    {
+        return $this->resident->full_name ?? null;
     }
 
     public function getApartmentNumberAttribute()

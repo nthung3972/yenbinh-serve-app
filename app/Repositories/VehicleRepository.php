@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class VehicleRepository
 {
-    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null)
+    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null, $status = null)
     {
         $query = Vehicle::with('updatedBy')->select('vehicles.*', 'apartments.apartment_number')
         ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
@@ -23,6 +23,10 @@ class VehicleRepository
 
         if (!empty($vehicle_type)) {
             $query->where('vehicle_type', 'LIKE', "%$vehicle_type%");
+        }
+
+        if (!is_null($status)) {
+            $query->where('status', $status);
         }
 
         $query->orderBy('created_at', 'desc');
@@ -53,8 +57,12 @@ class VehicleRepository
                 'license_plate' => $vehicle['license_plate'],
                 'vehicle_type' => $vehicle['vehicle_type'],
                 'parking_slot' => $vehicle['parking_slot'],
+                'vehicle_company' => $vehicle['vehicle_company'],
+                'vehicle_model' => $vehicle['vehicle_model'],
+                'vehicle_color' => $vehicle['vehicle_color'],
                 'status' => $vehicle['status'],
                 'building_id' => $vehicle['building_id'],
+                'resident_id' => $vehicle['resident_id'],
                 'apartment_id' => $vehicle['apartment_id'],
                 'created_at' => $vehicle['created_at'],
                 'updated_by' => $user->id,
@@ -64,13 +72,18 @@ class VehicleRepository
 
     public function edit(int $id)
     {
-        $vehicle = Vehicle::with('apartment')->where('vehicle_id', $id)->first();
+        $vehicle = Vehicle::with('apartment', 'resident')->where('vehicle_id', $id)->first();
         return $vehicle;
     }
 
     public function update(array $request, int $id)
     {
+        $inactive_date = null;
         $user = auth()->user();
+
+        if($request['status'] === 1) {
+            $inactive_date = Carbon::now();
+        }
 
         $update = Vehicle::where('vehicle_id', $id)->update([
             'license_plate' => $request['license_plate'],
@@ -81,6 +94,7 @@ class VehicleRepository
             'apartment_id' => $request['apartment_id'],
             'created_at' => $request['created_at'],
             'updated_by' => $user->id,
+            'inactive_date' => $inactive_date,
         ]);
         return $update;
     }

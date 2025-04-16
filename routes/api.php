@@ -73,6 +73,8 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/apartment/{id}/add-multiple-residents', [ApartmentController::class, 'addMultipleResidents']);
             Route::get('/apartment/{id}/edit', [ApartmentController::class, 'edit']);
             Route::post('/apartment/{id}/update', [ApartmentController::class, 'update']);
+            Route::get('/apartment-numbers/{id}', [ApartmentController::class, 'getApartmentCode']);
+            Route::get('/apartment-number/{code}/residents', [ApartmentController::class, 'getResidentsByApartment']);
         });
 
          //resident
@@ -83,6 +85,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/{id}/add-apartment', [ResidentController::class, 'addResidentToApartment']);
             Route::post('/{id}/delete-apartment', [ResidentController::class, 'deleteResidentToApartment']);
             Route::post('/update/{id}', [ResidentController::class, 'update']);
+
         });
 
          //invoice

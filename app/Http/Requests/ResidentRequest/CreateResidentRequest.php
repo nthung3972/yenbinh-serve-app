@@ -29,7 +29,7 @@ class CreateResidentRequest extends FormRequest
             'id_card_number' => 'required|unique:residents,id_card_number',
             'date_of_birth' => 'required|date',
             'gender' => 'required|string|max:255',
-            'phone_number' => 'nullable|string|max:20',
+            'phone_number' => 'required|string|max:20',
             'email' => 'required|unique:residents,email',
 
             // Kiểm tra căn hộ
