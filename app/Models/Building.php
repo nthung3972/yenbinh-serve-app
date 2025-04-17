@@ -23,6 +23,7 @@ class Building extends Model
         'status',
         'total_area',
         'building_type',
+        'management_fee_per_m2'
     ];
 
     // Một tòa nhà có nhiều căn hộ

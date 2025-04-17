@@ -24,30 +24,29 @@ class CreateInvoiceRequest extends FormRequest
     {
         return [
             'building_id' => 'required|exists:buildings,building_id',
-            'apartment_number' => 'required',
+            'apartment_id' => 'required|exists:apartments,apartment_id',
             'invoice_date' => 'required|date',
             'due_date' => 'required|date|after:invoice_date',
             'total_amount' => 'required|numeric',
-            'status' => 'required|in:0,1,2',
-            'invoice_detail' => 'required|array',
-            'invoice_detail.*.service_name' => 'required|string',
-            'invoice_detail.*.quantity' => 'required|numeric|min:0',
-            'invoice_detail.*.price' => 'required|numeric|min:0',
-            'invoice_detail.*.amount' => 'required|numeric|min:0',
-            'invoice_detail.*.description' => 'string|nullable'
+            'fees' => 'required|array',
+            'fees.*.fee_type_id' => 'required|exists:fee_types,fee_type_id',
+            'fees.*.amount' => 'required|numeric|min:0',
+            'fees.*.quantity' => 'nullable|numeric|min:0',
+            'fees.*.price' => 'nullable|numeric|min:0',
+            'fees.*.description' => 'string|required'
         ];
     }
 
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            // Kiểm tra tồn tại của căn hộ
-            $apartment = Apartment::where('apartment_number', $this->input('apartment_number'))->first();
+    // public function withValidator($validator)
+    // {
+    //     $validator->after(function ($validator) {
+    //         // Kiểm tra tồn tại của căn hộ
+    //         $apartment = Apartment::where('apartment_number', $this->input('apartment_number'))->first();
             
-            if (!$apartment) {
-                $validator->errors()->add('apartment_number', "Căn hộ {$this->input('apartment_number')} không tồn tại");
-                return;
-            }
-        });
-    }
+    //         if (!$apartment) {
+    //             $validator->errors()->add('apartment_number', "Căn hộ {$this->input('apartment_number')} không tồn tại");
+    //             return;
+    //         }
+    //     });
+    // }
 }
