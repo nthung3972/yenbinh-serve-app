@@ -15,6 +15,7 @@ use App\Http\Controllers\ApiAdmin\PasswordChangeController;
 use App\Http\Controllers\ApiAdmin\DailyReportController;
 use App\Http\Controllers\ApiAdmin\ExportController;
 use App\Http\Controllers\ApiAdmin\FeeTypeController;
+use App\Http\Controllers\ApiAdmin\VehicleTypeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -108,6 +109,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create', [VehicleController::class, 'create']);
             Route::get('/edit/{id}', [VehicleController::class, 'edit']);
             Route::post('/update/{id}', [VehicleController::class, 'update']);
+        });
+
+        //vehicle_types
+        Route::group(['prefix' => 'vehicle-type'], function () {
+            Route::get('/list', [VehicleTypeController::class, 'getListVehicleType']);
         });
 
         //Export

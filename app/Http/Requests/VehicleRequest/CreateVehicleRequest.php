@@ -26,7 +26,7 @@ class CreateVehicleRequest extends FormRequest
             '*.resident_id' => 'required|exists:residents,resident_id',
             '*.apartment_number' => 'required',
             '*.license_plate' => 'required|unique:vehicles,license_plate',
-            '*.vehicle_type' => 'required|string|in:car,motorbike,bicycle',
+            '*.vehicle_type_id' => 'required|exists:vehicle_types,vehicle_type_id',
             '*.parking_slot' => 'nullable|string',
             '*.created_at' => 'required|date',
             '*.status' => 'required|integer|in:0,1',

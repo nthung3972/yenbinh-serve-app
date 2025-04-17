@@ -25,7 +25,10 @@ class UpdateVehicleRequest extends FormRequest
             'building_id' => 'required|exists:buildings,building_id',
             'license_plate' => 'required|string|unique:vehicles,license_plate,'.$this->id.',vehicle_id',
             'apartment_number' => 'required',
-            'vehicle_type' => 'required|string|in:car,motorbike,bicycle',
+            'vehicle_type_id' => 'required|exists:vehicle_types,vehicle_type_id',
+            'vehicle_company' => 'required|string',
+            'vehicle_model' => 'required|string',
+            'vehicle_color' => 'required|string',
             'parking_slot' => 'nullable|string',
             'created_at' => 'required|date',
             'status' => 'required|integer|in:0,1'

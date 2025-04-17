@@ -10,7 +10,7 @@ class VehicleRepository
 {
     public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null, $status = null)
     {
-        $query = Vehicle::with('updatedBy')->select('vehicles.*', 'apartments.apartment_number')
+        $query = Vehicle::with('updatedBy', 'vehicleType')->select('vehicles.*', 'apartments.apartment_number')
         ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
         ->where('vehicles.building_id', $building_id);
 
@@ -55,7 +55,7 @@ class VehicleRepository
         foreach($request as $vehicle) {
             Vehicle::create([
                 'license_plate' => $vehicle['license_plate'],
-                'vehicle_type' => $vehicle['vehicle_type'],
+                'vehicle_type_id' => $vehicle['vehicle_type_id'],
                 'parking_slot' => $vehicle['parking_slot'],
                 'vehicle_company' => $vehicle['vehicle_company'],
                 'vehicle_model' => $vehicle['vehicle_model'],
@@ -87,7 +87,10 @@ class VehicleRepository
 
         $update = Vehicle::where('vehicle_id', $id)->update([
             'license_plate' => $request['license_plate'],
-            'vehicle_type' => $request['vehicle_type'],
+            'vehicle_type_id' => $request['vehicle_type_id'],
+            'vehicle_company' => $request['vehicle_company'],
+            'vehicle_model' => $request['vehicle_model'],
+            'vehicle_color' => $request['vehicle_color'],
             'parking_slot' => $request['parking_slot'],
             'status' => $request['status'],
             'building_id' => $request['building_id'],
