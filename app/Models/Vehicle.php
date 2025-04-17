@@ -28,7 +28,8 @@ class Vehicle extends Model
         'inactive_date',
         'vehicle_company',
         'vehicle_model',
-        'vehicle_color'
+        'vehicle_color',
+        'vehicle_type_id'
     ];
 
     public function apartment()

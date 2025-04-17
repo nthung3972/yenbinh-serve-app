@@ -14,6 +14,7 @@ use App\Http\Controllers\ApiAdmin\ImageUploadController;
 use App\Http\Controllers\ApiAdmin\PasswordChangeController;
 use App\Http\Controllers\ApiAdmin\DailyReportController;
 use App\Http\Controllers\ApiAdmin\ExportController;
+use App\Http\Controllers\ApiAdmin\FeeTypeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,11 +45,11 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'email'], function () {
             Route::post('/resend', [AuthController::class, 'resendVerification'])->middleware(['auth:api', 'throttle_resend']);
         });
-        
+
         //user
         Route::group(['prefix' => 'me'], function () {
-            Route::get('/profile', [AuthController::class,'profile']);
-            Route::put('profile-update', [AuthController::class,'updateProfile']);
+            Route::get('/profile', [AuthController::class, 'profile']);
+            Route::put('profile-update', [AuthController::class, 'updateProfile']);
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::post('/password-change-request', [PasswordChangeController::class, 'requestChange']);
             Route::post('/password-change-verify', [PasswordChangeController::class, 'verifyChange']);
@@ -59,7 +60,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'upload'], function () {
             Route::post('/upload-image', [ImageUploadController::class, 'upload']);
         });
-    
+
         //dashboard
         Route::group(['prefix' => 'dashboard'], function () {
             Route::get('/stats/{id}', [DashboardController::class, 'statsBuildingById']);
@@ -77,20 +78,25 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/apartment-number/{code}/residents', [ApartmentController::class, 'getResidentsByApartment']);
         });
 
-         //resident
-         Route::group(['prefix' => 'resident'], function () {
+        //resident
+        Route::group(['prefix' => 'resident'], function () {
             Route::get('/resident-list/{id}', [ResidentController::class, 'getListResident']);
             Route::post('/create', [ResidentController::class, 'create']);
             Route::get('/resident/{id}/edit', [ResidentController::class, 'edit']);
             Route::post('/{id}/add-apartment', [ResidentController::class, 'addResidentToApartment']);
             Route::post('/{id}/delete-apartment', [ResidentController::class, 'deleteResidentToApartment']);
             Route::post('/update/{id}', [ResidentController::class, 'update']);
-
         });
 
-         //invoice
-         Route::group(['prefix' => 'invoice'], function () {
+        //fee_type
+        Route::group(['prefix' => 'fee-type'], function () {
+            Route::get('/flexible', [FeeTypeController::class, 'getFlexibleFee']);
+        });
+
+        //invoice
+        Route::group(['prefix' => 'invoice'], function () {
             Route::get('/list-by-building/{id}', [InvoiceController::class, 'getListInvoice']);
+            Route::get('/apartment-fees/{id}', [InvoiceController::class, 'getApartmentFees']);
             Route::post('/create', [InvoiceController::class, 'create']);
             Route::get('/edit/{id}', [InvoiceController::class, 'show']);
             Route::post('/update/{id}', [InvoiceController::class, 'update']);
@@ -131,7 +137,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'admin-report'], function () {
             Route::get('/daily-reports', [DailyReportController::class, 'getAllReports']);
             Route::get('/daily-report/{id}', [DailyReportController::class, 'getDailyReportDetail']);
-            Route::delete('/delete-daily-report/{id}', [DailyReportController::class,'deleteDailyReport']);
+            Route::delete('/delete-daily-report/{id}', [DailyReportController::class, 'deleteDailyReport']);
         });
     });
 

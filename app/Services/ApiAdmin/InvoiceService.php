@@ -13,6 +13,7 @@ class InvoiceService
 
     public function getInvoicesByBuilding($request, int $id)
     {
+        // dd($request->invoice_date_from);
         return $this->invoiceRepository->getInvoicesByBuilding(
             $id, 
             $request->per_page ?? config('constant.paginate'),

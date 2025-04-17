@@ -11,14 +11,16 @@ class InvoiceDetail extends Model
 
     protected $primaryKey = 'invoice_detail_id';
 
+    protected $appends = ['fee_name'];
+
     protected $fillable = [
         'invoice_id',
-        'service_name',
         'amount',
         'quantity',
         'price',
         'amount',
         'description',
+        'fee_type_id'
     ];
 
     public function invoice()
@@ -29,5 +31,10 @@ class InvoiceDetail extends Model
     public function feeTypes()
     {
         return $this->belongsTo(FeeType::class, 'fee_type_id', 'fee_type_id');
+    }
+
+    public function getFeeNameAttribute()
+    {
+        return $this->feeTypes->fee_name ?? null;
     }
 }

@@ -36,6 +36,61 @@ class InvoiceController extends Controller
         }
     }
 
+    public function getApartmentFees($apartmentId)
+    {
+        // Lấy thông tin quản lý phí
+        $managementInfo = DB::table('apartments as a')
+            ->join('buildings as b', 'a.building_id', '=', 'b.building_id')
+            ->where('a.apartment_id', $apartmentId)
+            ->select('a.area', 'b.management_fee_per_m2')
+            ->first();
+
+        $managementFeeAmount = $managementInfo->area * $managementInfo->management_fee_per_m2;
+        $managementDescription = 'Diện tích ' . $managementInfo->area . 'm², phí ' . number_format($managementInfo->management_fee_per_m2, 0, ',', '.') . 'đ/m²';
+
+        // Lấy danh sách loại xe, số lượng và phí theo từng loại
+        $parkingFees = DB::table('vehicles as v')
+            ->join('vehicle_types as vt', 'v.vehicle_type_id', '=', 'vt.vehicle_type_id')
+            ->join('apartments as a', 'v.apartment_id', '=', 'a.apartment_id')
+            ->join('building_vehicle_fees as bvf', function ($join) {
+                $join->on('bvf.vehicle_type_id', '=', 'vt.vehicle_type_id')
+                    ->on('bvf.building_id', '=', 'a.building_id');
+            })
+            ->where('v.apartment_id', $apartmentId)
+            ->groupBy('vt.vehicle_type_name', 'bvf.parking_fee')
+            ->selectRaw('
+            vt.vehicle_type_name,
+            COUNT(v.vehicle_id) as vehicle_count,
+            bvf.parking_fee as parking_fee_per_vehicle,
+            COUNT(v.vehicle_id) * bvf.parking_fee as amount
+        ')
+            ->get();
+
+        // Tính tổng phí gửi xe và mô tả
+        $parkingFeeTotal = 0;
+        $parkingDescriptionParts = [];
+
+        foreach ($parkingFees as $fee) {
+            $parkingFeeTotal += $fee->amount;
+            $parkingDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name}";
+        }
+
+        $parkingDescription = implode(', ', $parkingDescriptionParts);
+
+        return response()->json([
+            [
+                'type' => 'Phí quản lý vận hành',
+                'amount' => $managementFeeAmount,
+                'description' => $managementDescription,
+            ],
+            [
+                'type' => 'Phí gửi xe',
+                'amount' => $parkingFeeTotal,
+                'description' => $parkingDescription ?: 'Không có phương tiện',
+            ]
+        ]);
+    }
+
     public function create(CreateInvoiceRequest $request)
     {
         try {

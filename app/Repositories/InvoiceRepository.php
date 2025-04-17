@@ -45,31 +45,27 @@ class InvoiceRepository
     public function create(array $request)
     {
         $user = auth()->user();
-        $apartment = Apartment::where('apartment_number', $request['apartment_number'])->first();
-        if ($apartment) {
-            $apartmentId =  $apartment->apartment_id;
-        }
         $invoice = Invoice::create([
             'building_id' => $request['building_id'],
-            'apartment_id' => $apartmentId,
+            'apartment_id' => $request['apartment_id'],
             'invoice_date' => $request['invoice_date'],
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
-            'status' => $request['status'],
+            'status' => 0,
             'updated_by' => $user->id
         ]);
 
         $invoiceId = $invoice->invoice_id;
 
         if ($invoice && $invoice->invoice_id) {
-            foreach ($request['invoice_detail'] as $invoiceDetail) {
+            foreach ($request['fees'] as $invoiceDetail) {
                 InvoiceDetail::create([
                     'invoice_id' => $invoiceId,
-                    'service_name' => $invoiceDetail['service_name'],
-                    'quantity' => $invoiceDetail['quantity'],
-                    'price' =>  $invoiceDetail['price'],
+                    'fee_type_id' => $invoiceDetail['fee_type_id'],
+                    'quantity' => $invoiceDetail['quantity'] ?? null,
+                    'price' =>  $invoiceDetail['price'] ?? null,
                     'amount' => $invoiceDetail['amount'],
-                    'description' => $invoiceDetail['description'] ? $invoiceDetail['description'] : null,
+                    'description' => $invoiceDetail['description']
                 ]);
             }
         }
@@ -123,14 +119,14 @@ class InvoiceRepository
 
         InvoiceDetail::where('invoice_id', $invoice->invoice_id)->delete();
 
-        foreach ($request['invoice_detail'] as $invoiceDetaill) {
+        foreach ($request['fees'] as $invoiceDetaill) {
             InvoiceDetail::create([
                 'invoice_id' => $invoice->invoice_id,
-                'service_name' => $invoiceDetaill['service_name'],
-                'quantity' => $invoiceDetaill['quantity'],
-                'price' => $invoiceDetaill['price'],
+                'fee_type_id' => $invoiceDetaill['fee_type_id'],
+                'quantity' => $invoiceDetaill['quantity'] ?? null,
+                'price' => $invoiceDetaill['price'] ?? null,
                 'amount' => $invoiceDetaill['amount'],
-                'description' => $invoiceDetaill['description'] ?? null
+                'description' => $invoiceDetaill['description']
             ]);
         }
 
