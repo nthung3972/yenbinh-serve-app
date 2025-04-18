@@ -114,6 +114,7 @@ class InvoiceRepository
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
             'status' => $request['status'],
+            'payment_method' => $request['payment_method'] ?? '',
             'updated_by' => $user->id,
         ]);
 

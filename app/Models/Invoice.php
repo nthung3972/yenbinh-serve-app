@@ -18,7 +18,8 @@ class Invoice extends Model
         'due_date',
         'total_amount',
         'status',
-        'updated_by'
+        'updated_by',
+        'payment_method',
     ];
 
     public function invoiceDetails()
