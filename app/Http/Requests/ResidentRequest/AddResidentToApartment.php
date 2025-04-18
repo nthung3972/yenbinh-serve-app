@@ -60,6 +60,11 @@ class AddResidentToApartment extends FormRequest
                 $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} đã có chủ sở hữu");
                 return;
             }
+
+            if (!$existingOwner && $this->input('role_in_apartment') != 0) {
+                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} trống, cư dân đầu tiên phải là chủ sở hữu căn hộ");
+                return;
+            }
         });
     }
 }

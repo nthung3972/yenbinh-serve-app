@@ -28,6 +28,7 @@ class UpdateInvoiceRequest extends FormRequest
             'due_date' => 'required|date|after:invoice_date',
             'total_amount' => 'required|numeric',
             'status' => 'required|in:0,1,2',
+            'payment_method' => 'nullable|string|in:cash,bank_transfer,qr_code,other',
             'fees' => 'required|array',
             'fees.*.fee_type_id' => 'required|exists:fee_types,fee_type_id',
             'fees.*.amount' => 'required|numeric|min:0',
