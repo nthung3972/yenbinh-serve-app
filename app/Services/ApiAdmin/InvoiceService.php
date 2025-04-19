@@ -2,7 +2,9 @@
 namespace App\Services\ApiAdmin;
 
 use App\Repositories\InvoiceRepository;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Exceptions\ValidationException;
 
 class InvoiceService
 {
@@ -26,7 +28,28 @@ class InvoiceService
 
     public function create(array $request)
     {
-        return $this->invoiceRepository->create($request);
+        $data = $this->checkInvoice($request);
+        return $this->invoiceRepository->create($data);
+    }
+
+    protected function checkInvoice(array $request) 
+    {
+        $errors = [];
+        $invoiceDate = Carbon::parse($request['invoice_date']);
+        $year = $invoiceDate->year;
+        $month = $invoiceDate->month;
+        
+        $checkInvoice = $this->invoiceRepository->existingInvoice($request, $year, $month);
+
+        if ($checkInvoice) {
+            throw new \Exception("Căn hộ này đã có hóa đơn của tháng {$month}/{$year}!", 422);
+        }
+        
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
+        }
+        
+        return $request;
     }
 
     public function show(int $id)
