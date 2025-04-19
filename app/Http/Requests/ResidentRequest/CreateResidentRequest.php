@@ -25,12 +25,12 @@ class CreateResidentRequest extends FormRequest
     {
         return [
             // Thông tin cư dân
-            'full_name' => 'required|string|max:255',
-            'id_card_number' => 'required|unique:residents,id_card_number',
-            'date_of_birth' => 'required|date',
+            'full_name' => 'nullable|string|max:255',
+            'id_card_number' => 'nullable|unique:residents,id_card_number',
+            'date_of_birth' => 'nullable|date',
             'gender' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:20',
-            'email' => 'required|unique:residents,email',
+            'phone_number' => 'nullable|string|max:20',
+            'email' => 'nullable|unique:residents,email',
 
             // Kiểm tra căn hộ
             'apartments' => [
@@ -58,9 +58,19 @@ class CreateResidentRequest extends FormRequest
                             $fail("Căn hộ {$apartment['apartment_number']} đã có chủ hộ.");
                         }
 
-                        // Nếu chưa có chủ hộ nhưng cư dân đầu tiên không phải chủ hộ => Báo lỗi
-                        if (!$existingOwner && $apartment['role_in_apartment'] != 0) {
-                            $fail("Căn hộ {$apartment['apartment_number']} chưa có chủ hộ. Cư dân đầu tiên phải là chủ hộ.");
+                        // Kiểm tra căn hộ đã người thuê chính hay chưa
+                        $existingTenant = ApartmentResident::where('apartment_id', $existingApartment->apartment_id)
+                            ->where('role_in_apartment', 1)
+                            ->exists();
+
+                        // Nếu đã có người thuê chính nhưng vẫn thêm cư dân có role = 1 => Báo lỗi
+                        if ($existingTenant && $apartment['role_in_apartment'] == 1) {
+                            $fail("Căn hộ {$apartment['apartment_number']} đã có người thuê chính.");
+                        }
+
+                         // Nếu chưa có chủ hộ nhưng cư dân đầu tiên không phải chủ hộ => Báo lỗi
+                         if (!$existingOwner && !$existingTenant && $apartment['role_in_apartment'] != 0  && $apartment['role_in_apartment'] != 1) {
+                            $fail("Căn hộ {$apartment['apartment_number']} chưa có chủ hộ. Cư dân đầu tiên phải là chủ hộ hoặc người thuê chính.");
                         }
                     }
 
@@ -78,6 +88,7 @@ class CreateResidentRequest extends FormRequest
             // Kiểm tra từng căn hộ
             'apartments.*.apartment_number' => 'required|string',
             'apartments.*.role_in_apartment' => 'required|in:0,1,2',
+            'apartments.*.notes' => 'nullable|string',
         ];
     }
 }

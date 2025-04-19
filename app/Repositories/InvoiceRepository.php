@@ -133,4 +133,13 @@ class InvoiceRepository
 
         return $invoice;
     }
+
+    public function existingInvoice(array $request, $year, $month) {
+        $existingInvoice = Invoice::where('apartment_id', $request['apartment_id'])
+            ->whereYear('invoice_date', $year)
+            ->whereMonth('invoice_date', $month)
+            ->exists();
+
+        return $existingInvoice;
+    }
 }

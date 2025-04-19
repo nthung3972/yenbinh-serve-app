@@ -43,6 +43,7 @@ class ResidentRepository
                         'apartment_id' => $apartment->apartment_id,
                         'resident_id' => $residentId,
                         'role_in_apartment' => $residentData['role_in_apartment'],
+                        'notes' => $residentData['notes'],
                         'registration_date' =>  $registrationDate,
                         'registration_status' => $registrationStatus
                     ]);
