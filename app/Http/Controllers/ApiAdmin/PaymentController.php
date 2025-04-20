@@ -27,6 +27,19 @@ class PaymentController extends Controller
         //     ], 422);
         // }
 
+         // Lấy thông tin hóa đơn
+    $invoice = Invoice::find($request->invoice_id);
+    if (!$invoice) {
+        return response()->json(['error' => 'Invoice not found'], 404);
+    }
+
+    // Kiểm tra thanh toán không được vượt quá số tiền còn lại
+    if ($request->amount > $invoice->remaining_balance) {
+        return response()->json([
+            'error' => ['amount' => ['Số tiền thanh toán vượt quá số tiền còn lại của hóa đơn']]
+        ], 422);
+    }
+
         // Start transaction
         return DB::transaction(function () use ($request) {
             // Create payment
@@ -42,7 +55,13 @@ class PaymentController extends Controller
             $invoice = Invoice::findOrFail($request->invoice_id);
             $invoice->total_paid += $request->amount;
             $invoice->remaining_balance = $invoice->total_amount - $invoice->total_paid;
-            $invoice->status = $invoice->remaining_balance <= 0 ? '0' : ($invoice->total_paid > 0 ? '3' : '1');
+            if ($invoice->remaining_balance <= 0) {
+                $invoice->status = '1'; // Đã thanh toán đủ
+            } elseif ($invoice->total_paid > 0) {
+                $invoice->status = '3'; // Thanh toán một phần
+            } else {
+                $invoice->status = '0'; // Chưa thanh toán
+            }
             $invoice->save();
 
             return response()->json([
