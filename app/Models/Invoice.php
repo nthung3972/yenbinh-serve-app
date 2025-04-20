@@ -20,6 +20,8 @@ class Invoice extends Model
         'status',
         'updated_by',
         'payment_method',
+        'total_paid',
+        'remaining_balance'
     ];
 
     public function invoiceDetails()
@@ -40,5 +42,10 @@ class Invoice extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payments::class, 'invoice_id', 'invoice_id');
     }
 }

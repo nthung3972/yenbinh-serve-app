@@ -16,6 +16,7 @@ use App\Http\Controllers\ApiAdmin\DailyReportController;
 use App\Http\Controllers\ApiAdmin\ExportController;
 use App\Http\Controllers\ApiAdmin\FeeTypeController;
 use App\Http\Controllers\ApiAdmin\VehicleTypeController;
+use App\Http\Controllers\ApiAdmin\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/update/{id}', [InvoiceController::class, 'update']);
         });
 
+        //payment
+        Route::group(['prefix' => 'payment'], function () {
+            Route::post('/create', [PaymentController::class, 'create']);
+        });
+        
         //vehicle
         Route::group(['prefix' => 'vehicle'], function () {
             Route::get('/list-by-building/{id}', [VehicleController::class, 'getListVehicle']);
