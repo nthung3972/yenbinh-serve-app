@@ -51,6 +51,7 @@ class InvoiceRepository
             'invoice_date' => $request['invoice_date'],
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
+            'remaining_balance' => $request['total_amount'],
             'status' => 0,
             'updated_by' => $user->id
         ]);
@@ -74,7 +75,7 @@ class InvoiceRepository
 
     public function show(int $id)
     {
-        $invoice = Invoice::with('invoiceDetails', 'apartment', 'updatedBy')->find($id);
+        $invoice = Invoice::with('invoiceDetails', 'apartment', 'updatedBy', 'payments')->find($id);
 
         if (!$invoice) {
             // Ném ra một exception khi không tìm thấy hóa đơn
@@ -90,7 +91,11 @@ class InvoiceRepository
             'due_date' => $invoice->due_date,
             'status' => $invoice->status,
             'total_amount' => $invoice->total_amount,
+            'total_paid' => $invoice->total_paid,
+            'remaining_balance' => $invoice->remaining_balance,
+            'payment_method' => $invoice->payment_method,
             'invoice_details' => $invoice->invoiceDetails,
+            'payments' => $invoice->payments,
         ];
         return $detai;
     }
@@ -113,8 +118,6 @@ class InvoiceRepository
             'invoice_date' => $request['invoice_date'],
             'due_date' => $request['due_date'],
             'total_amount' => $request['total_amount'],
-            'status' => $request['status'],
-            'payment_method' => $request['payment_method'] ?? '',
             'updated_by' => $user->id,
         ]);
 
