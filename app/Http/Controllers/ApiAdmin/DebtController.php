@@ -14,32 +14,43 @@ class DebtController extends Controller
     {
         $perPage = $request->input('per_page', config('constant.paginate'));
 
-        $query = Invoice::query()
+        // Xây dựng query cơ bản cho hóa đơn
+        $baseQuery = Invoice::query()
             ->with(['apartment', 'apartment.residents', 'apartment.building'])
-            ->where('remaining_balance', '>', 0) // Loại bỏ hóa đơn đã thanh toán hết
             ->when($request->filled('status') || $request->status === '0' || $request->status === 0, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })
             ->when($request->building_id, fn($q) => $q->whereHas('apartment', fn($q2) => $q2->where('building_id', $request->building_id)));
+
         // Lọc theo thời gian
-        if ($request->has('period_type') && $request->has('period_value')) {
+        if ($request->has('period_type') && $request->has('period_value') && $request->period_value !== null) {
+            // dd($request->period_value);
             if ($request->period_type === 'month') {
-                $query->whereYear('invoice_date', substr($request->period_value, 0, 4))
-                      ->whereMonth('invoice_date', substr($request->period_value, 5, 2));
+                $baseQuery->whereYear('invoice_date', substr($request->period_value, 0, 4))
+                    ->whereMonth('invoice_date', substr($request->period_value, 5, 2));
             } elseif ($request->period_type === 'quarter') {
                 [$year, $quarter] = explode('-Q', $request->period_value);
-                $months = match($quarter) {
+                $months = match ($quarter) {
                     '1' => [1, 2, 3],
                     '2' => [4, 5, 6],
                     '3' => [7, 8, 9],
                     '4' => [10, 11, 12]
                 };
-                $query->whereYear('invoice_date', $year)
-                      ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
+                $baseQuery->whereYear('invoice_date', $year)
+                    ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
             } elseif ($request->period_type === 'year') {
-                $query->whereYear('invoice_date', $request->period_value);
+                $baseQuery->whereYear('invoice_date', $request->period_value);
             }
         }
+
+        // Tính tổng giá trị hóa đơn đã phát hành và đã thanh toán
+        $totals = (clone $baseQuery)->selectRaw('
+            SUM(total_amount) as total_issued_amount,
+            SUM(total_paid) as total_paid_amount
+        ')->first();
+
+        // Query cho danh sách hóa đơn (chỉ lấy remaining_balance > 0)
+        $query = (clone $baseQuery)->where('remaining_balance', '>', 0);
 
         // Phân trang hóa đơn
         $paginatedInvoices = $query->paginate($perPage);
@@ -49,7 +60,7 @@ class DebtController extends Controller
             return [
                 'invoice_id' => $invoice->invoice_id,
                 'building_name' => $invoice->apartment->building->name ?? 'N/A',
-                'apartment_number' => $invoice->apartment->apartment_number ?? 'N/A',
+                'apartment_number' => $invoice->apartment->number ?? 'N/A',
                 'resident_name' => $invoice->apartment->resident->name ?? 'N/A',
                 'total_amount' => $invoice->total_amount,
                 'remaining_balance' => $invoice->remaining_balance,
@@ -62,7 +73,7 @@ class DebtController extends Controller
 
         // Tính tổng công nợ và công nợ quá hạn
         $totalDebt = $invoices->sum('remaining_balance');
-        $overdueDebt = $invoices->where('due_date', '<', now())->sum('remaining_balance');
+        $overdueDebt = $invoices->where('is_overdue', true)->sum('remaining_balance');
 
         return response()->json([
             'message' => 'Debts retrieved successfully',
@@ -70,6 +81,8 @@ class DebtController extends Controller
                 'invoices' => $invoices,
                 'total_debt' => $totalDebt,
                 'overdue_debt' => $overdueDebt,
+                'total_issued_amount' => $totals->total_issued_amount ?? 0,
+                'total_paid_amount' => $totals->total_paid_amount ?? 0,
                 'pagination' => [
                     'current_page' => $paginatedInvoices->currentPage(),
                     'per_page' => $paginatedInvoices->perPage(),
@@ -79,6 +92,63 @@ class DebtController extends Controller
             ]
         ], 200);
     }
+
+    /**
+     * Apply time filter to the query based on period type and value
+     */
+    // private function applyTimeFilter($query, $request)
+    // {
+    //     if ($request->period_type === 'month') {
+    //         $year = substr($request->period_value, 0, 4);
+    //         $month = substr($request->period_value, 5, 2);
+    //         $query->whereYear('invoice_date', $year)
+    //             ->whereMonth('invoice_date', $month);
+    //     } elseif ($request->period_type === 'quarter') {
+    //         [$year, $quarter] = explode('-Q', $request->period_value);
+    //         $months = match ($quarter) {
+    //             '1' => [1, 2, 3],
+    //             '2' => [4, 5, 6],
+    //             '3' => [7, 8, 9],
+    //             '4' => [10, 11, 12]
+    //         };
+    //         $query->whereYear('invoice_date', $year)
+    //             ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
+    //     } elseif ($request->period_type === 'year') {
+    //         $query->whereYear('invoice_date', $request->period_value);
+    //     }
+    // }
+
+    /**
+     * Get the total amount and total paid for invoices
+     */
+    // private function getInvoiceTotals($query)
+    // {
+    //     return $query->selectRaw('
+    //     SUM(total_amount) as total_issued_amount,
+    //     SUM(total_paid) as total_paid_amount
+    // ')->first() ?? ['total_issued_amount' => 0, 'total_paid_amount' => 0];
+    // }
+
+    /**
+     * Transform invoices to required format
+     */
+    // private function transformInvoices($paginatedInvoices)
+    // {
+    //     return collect($paginatedInvoices->items())->map(function ($invoice) {
+    //         return [
+    //             'invoice_id' => $invoice->invoice_id,
+    //             'building_name' => $invoice->apartment->building->name ?? 'N/A',
+    //             'apartment_number' => $invoice->apartment->apartment_number ?? 'N/A',
+    //             'resident_name' => $invoice->apartment->resident->name ?? 'N/A',
+    //             'total_amount' => $invoice->total_amount,
+    //             'remaining_balance' => $invoice->remaining_balance,
+    //             'due_date' => $invoice->due_date,
+    //             'status' => $invoice->status,
+    //             'invoice_date' => $invoice->invoice_date,
+    //             'is_overdue' => $invoice->due_date < now() && $invoice->remaining_balance > 0
+    //         ];
+    //     });
+    // }
 
     public function getDebtHistory(Request $request)
     {
@@ -97,17 +167,17 @@ class DebtController extends Controller
         if ($request->has('period_type') && $request->has('period_value')) {
             if ($request->period_type === 'month') {
                 $query->whereYear('invoice_date', substr($request->period_value, 0, 4))
-                      ->whereMonth('invoice_date', substr($request->period_value, 5, 2));
+                    ->whereMonth('invoice_date', substr($request->period_value, 5, 2));
             } elseif ($request->period_type === 'quarter') {
                 [$year, $quarter] = explode('-Q', $request->period_value);
-                $months = match($quarter) {
+                $months = match ($quarter) {
                     '1' => [1, 2, 3],
                     '2' => [4, 5, 6],
                     '3' => [7, 8, 9],
                     '4' => [10, 11, 12]
                 };
                 $query->whereYear('invoice_date', $year)
-                      ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
+                    ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
             } elseif ($request->period_type === 'year') {
                 $query->whereYear('invoice_date', $request->period_value);
             }
@@ -164,7 +234,7 @@ class DebtController extends Controller
             ->pluck('year')
             ->map(function ($year) {
                 return [
-                    'value' => (string)$year,
+                    'value' => (string) $year,
                     'label' => 'Năm ' . $year
                 ];
             });

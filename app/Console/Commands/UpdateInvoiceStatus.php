@@ -28,12 +28,12 @@ class UpdateInvoiceStatus extends Command
     public function handle()
     {
         $today = Carbon::today();
-        
-        // Tìm hóa đơn quá hạn chưa thanh toán
-        $invoices = Invoice::where('status', 0)
+    
+        // Cập nhật hóa đơn quá hạn có status khác 1 (chưa thanh toán hoặc đang chờ...)
+        $invoices = Invoice::where('status', '!=', 1)
             ->whereDate('due_date', '<', $today)
             ->update(['status' => 2]);
-
+    
         $this->info("Đã cập nhật trạng thái cho {$invoices} hóa đơn quá hạn.");
     }
 }
