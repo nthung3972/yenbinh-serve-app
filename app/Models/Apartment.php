@@ -40,6 +40,16 @@ class Apartment extends Model
         return $this->hasMany(Vehicle::class, 'resident_id', 'resident_id');
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'apartment_id', 'apartment_id');
+    }
+
+    public function debt_logs(): HasMany
+    {
+        return $this->hasMany(DebtLog::class, 'apartment_id', 'apartment_id');
+    }
+
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');

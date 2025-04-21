@@ -48,7 +48,7 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'payment_date' => $request->payment_date,
                 'payment_method' => $request->payment_method,
-                'note' => $request->note,
+                'notes' => $request->notes,
             ]);
 
             // Update invoice

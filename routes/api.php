@@ -17,6 +17,7 @@ use App\Http\Controllers\ApiAdmin\ExportController;
 use App\Http\Controllers\ApiAdmin\FeeTypeController;
 use App\Http\Controllers\ApiAdmin\VehicleTypeController;
 use App\Http\Controllers\ApiAdmin\PaymentController;
+use App\Http\Controllers\ApiAdmin\DebtController;
 
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +108,13 @@ Route::group(['prefix' => 'admin'], function () {
         //payment
         Route::group(['prefix' => 'payment'], function () {
             Route::post('/create', [PaymentController::class, 'create']);
+        });
+
+        //debt
+        Route::group(['prefix' => 'debt'], function () {
+            Route::get('/', [DebtController::class, 'index']);
+            Route::get('/history', [DebtController::class, 'getDebtHistory']);
+            Route::get('/periods', [DebtController::class, 'getPeriods']);
         });
         
         //vehicle
