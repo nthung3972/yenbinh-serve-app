@@ -29,13 +29,11 @@ use App\Http\Controllers\ApiAdmin\DebtController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
-Route::get('/check', function () {
-    return "Database connected!";
-});
-
 Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
+        Route::get('/check', function () {
+            return "Database connected!";
+        });
         Route::post('login', [AuthController::class, 'login']);
         Route::get('/verify/{token}', [AuthController::class, 'verify']);
         Route::post('/forgot-password', [PasswordChangeController::class, 'forgotPassword']);
