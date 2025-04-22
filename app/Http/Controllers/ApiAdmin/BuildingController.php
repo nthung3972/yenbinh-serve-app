@@ -15,6 +15,7 @@ class BuildingController extends Controller
         public BuildingService $buildingService,
     ) {}
 
+    //getListBuilding
     public function getListBuilding(GetListBuildingRequest $request)
     {
         try {
