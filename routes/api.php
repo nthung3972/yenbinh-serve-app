@@ -30,6 +30,10 @@ use App\Http\Controllers\ApiAdmin\DebtController;
 |
 */
 
+Route::get('/check', function () {
+    return "Database connected!";
+});
+
 Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
         Route::post('login', [AuthController::class, 'login']);
