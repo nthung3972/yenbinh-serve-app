@@ -7,38 +7,23 @@ use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\PaymentRequest\CreatePaymentRequest;
 
 class PaymentController extends Controller
 {
-    public function create(Request $request)
+    public function create(CreatePaymentRequest $request)
     {
-        // // Validate request
-        // $validator = Validator::make($request->all(), [
-        //     'invoice_id' => 'required|exists:invoices,invoice_id',
-        //     'amount' => 'required|numeric|min:0.01',
-        //     'payment_date' => 'required|date',
-        //     'payment_method' => 'nullable|string|max:50',
-        //     'note' => 'nullable|string',
-        // ]);
+        $invoice = Invoice::find($request->invoice_id);
+        if (!$invoice) {
+            return response()->json(['error' => 'Invoice not found'], 404);
+        }
 
-        // if ($validator->fails()) {
-        //     return response()->json([
-        //         'error' => $validator->errors(),
-        //     ], 422);
-        // }
-
-         // Lấy thông tin hóa đơn
-    $invoice = Invoice::find($request->invoice_id);
-    if (!$invoice) {
-        return response()->json(['error' => 'Invoice not found'], 404);
-    }
-
-    // Kiểm tra thanh toán không được vượt quá số tiền còn lại
-    if ($request->amount > $invoice->remaining_balance) {
-        return response()->json([
-            'error' => ['amount' => ['Số tiền thanh toán vượt quá số tiền còn lại của hóa đơn']]
-        ], 422);
-    }
+        // Kiểm tra thanh toán không được vượt quá số tiền còn lại
+        if ($request->amount > $invoice->remaining_balance) {
+            return response()->json([
+                'errors' => ['amount' => ['Số tiền thanh toán vượt quá số tiền còn lại của hóa đơn']]
+            ], 422);
+        }
 
         // Start transaction
         return DB::transaction(function () use ($request) {
