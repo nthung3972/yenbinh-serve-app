@@ -60,8 +60,7 @@ class DebtController extends Controller
             return [
                 'invoice_id' => $invoice->invoice_id,
                 'building_name' => $invoice->apartment->building->name ?? 'N/A',
-                'apartment_number' => $invoice->apartment->number ?? 'N/A',
-                'resident_name' => $invoice->apartment->resident->name ?? 'N/A',
+                'apartment_number' => $invoice->apartment->apartment_number ?? 'N/A',
                 'total_amount' => $invoice->total_amount,
                 'remaining_balance' => $invoice->remaining_balance,
                 'due_date' => $invoice->due_date,
