@@ -100,11 +100,12 @@ class AuthController extends Controller
         $user = $this->userService->checkVerificationToken($token);
         
         if (!$user) {
-            return redirect('http://localhost:3000/auth/verify-failed');
+            // return redirect('http://localhost:3000/auth/verify-failed');
+            return redirect('https://yenbinh-web-app.vercel.app/auth/verify-failed');
 
-            return response()->json([
-                'message' => 'Token xác thực không hợp lệ!'
-            ], 404);
+            // return response()->json([
+            //     'message' => 'Token xác thực không hợp lệ!'
+            // ], 404);
         }
 
         if (Carbon::now()->isAfter($user->token_expiry)) {
@@ -113,12 +114,13 @@ class AuthController extends Controller
             $user->token_expiry = null;
             $user->save();
 
-            return redirect('http://localhost:3000/auth/verify-failed');
+            // redirect('http://localhost:3000/auth/verify-failed');
+            return redirect('https://yenbinh-web-app.vercel.app/auth/verify-failed');
             
-            return response()->json([
-                'message' => 'Token xác thực đã hết hạn! Vui lòng đăng nhập lại để nhận token mới.',
-                'expired' => true
-            ], 401);
+            // return response()->json([
+            //     'message' => 'Token xác thực đã hết hạn! Vui lòng đăng nhập lại để nhận token mới.',
+            //     'expired' => true
+            // ], 401);
         }
 
         $user->email_verified_at = Carbon::now();
@@ -126,12 +128,13 @@ class AuthController extends Controller
         $user->token_expiry = null;
         $user->save();
 
-        return redirect('http://localhost:3000/auth/email-verified-success');
+        // return redirect('http://localhost:3000/auth/email-verified-success');
+        return redirect('https://yenbinh-web-app.vercel.app/auth/email-verified-success');
 
         // Xác thực thành công
-        return response()->json([
-            'message' => 'Xác thực email thành công! Bạn có thể tiếp tục sử dụng ứng dụng.'
-        ], 200);
+        // return response()->json([
+        //     'message' => 'Xác thực email thành công! Bạn có thể tiếp tục sử dụng ứng dụng.'
+        // ], 200);
     }
 
     /**
@@ -181,6 +184,7 @@ class AuthController extends Controller
             $info = [
                 'name'=> $user->name,
                 'email'=> $user->email,
+                'role'=> $user->role,
                 'gender'=> $user->gender,
                 'avatar'=> $user->avatar,
                 'phone_number'=> $user->phone_number,

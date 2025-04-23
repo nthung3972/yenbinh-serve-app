@@ -52,7 +52,6 @@ class StaffRepository
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            
         }
         return $staff;
     }
