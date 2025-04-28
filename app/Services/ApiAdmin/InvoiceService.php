@@ -61,4 +61,9 @@ class InvoiceService
     {
         return $this->invoiceRepository->update($request, $id);
     }
+
+    public function delete(int $id)
+    {
+        return $this->invoiceRepository->delete($id);
+    }
 }

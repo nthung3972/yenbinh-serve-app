@@ -36,6 +36,8 @@ class BuildingController extends Controller
                 'image',
                 'total_area',
                 'status',
+                'management_fee_per_m2',
+                'management_board_fee_per_m2',
                 'building_type'
             ]));
             return Response::data(['data' => $create]);
@@ -62,6 +64,8 @@ class BuildingController extends Controller
                 'address',
                 'floors',
                 'image',
+                'management_fee_per_m2',
+                'management_board_fee_per_m2',
                 'total_area',
                 'status',
                 'building_type'

@@ -75,4 +75,14 @@ class VehicleController extends Controller
             return Response::dataError($th->getCode() ?: 500, ['general' => [$th->getMessage()]], "Lỗi hệ thống");
         }
     }
+
+    public function destroy($id) 
+    {
+        try {
+            $vehicle = $this->vehicleService->delete($id);
+            return Response::data(['data' => $vehicle]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
 }

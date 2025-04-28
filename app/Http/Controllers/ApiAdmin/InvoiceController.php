@@ -167,4 +167,17 @@ class InvoiceController extends Controller
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }
+
+    public function destroy($id)    
+    {
+        try {
+            DB::beginTransaction();
+            $invoices = $this->invoiceService->delete($id);
+            DB::commit();
+            return Response::data(['data' => $invoices]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
 }

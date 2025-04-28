@@ -26,9 +26,11 @@ class CreateStaffRequest extends FormRequest
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:admin,staff',
+            'address' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:15',
             'buildings' => 'required|array',
             'buildings.*.building_id' => 'required|exists:buildings,building_id',
-            'buildings.*.role' => 'required|string',
+            'buildings.*.role' => 'required|string|in:manager,monitor',
             'buildings.*.assigned_tasks' => 'nullable',
         ];
     }

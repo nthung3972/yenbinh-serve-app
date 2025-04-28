@@ -12,9 +12,9 @@ class ResidentRepository
 {
     public function getListResident($building_id, $perPage = '', $keyword = null)
     {
-        $query = Resident::with('updatedBy')->whereHas('apartments', function ($q) use ($building_id) {
+        $query = Resident::with(['updatedBy', 'apartments' => function ($q) use ($building_id) {
             $q->where('building_id', $building_id);
-        });
+        }]);
 
         if (!empty($keyword)) {
             $query->where('full_name', 'LIKE', "%$keyword%");

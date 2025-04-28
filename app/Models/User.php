@@ -55,4 +55,9 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         return $this->hasMany(ShiftReport::class, 'created_by');
     }
+
+    public function staffAssignment()
+    {
+        return $this->hasMany(StaffAssignment::class, 'staff_id');
+    }
 }

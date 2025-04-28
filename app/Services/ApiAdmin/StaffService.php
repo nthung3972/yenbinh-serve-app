@@ -25,6 +25,18 @@ class StaffService
         return $staff;
     }
 
+    public function getStaffByID($id)
+    {
+        $staff = $this->staffRepository->findById($id);
+        if ($staff->role === 'admin') {
+            throw new \Exception("Không thể xem thông tin Admin!", 403);
+        }
+        if (!$staff) {
+            throw new \Exception("Mã nhân viên không tồn tại!", 422);
+        }
+        return $staff;
+    }
+
     public function deleteStaff($id)
     {
         $staff = $this->staffRepository->findById($id);
