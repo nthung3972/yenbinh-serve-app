@@ -39,6 +39,16 @@ class StaffController extends Controller
         }
     }
 
+    public function getStaffDetail($id)
+    {
+        try {
+            $staff = $this->staffService->getStaffByID($id);
+            return Response::data(['data' => $staff]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
     public function deleteStaff($id)
     {
         try {

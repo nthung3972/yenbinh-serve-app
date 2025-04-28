@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Apartment;
 use App\Models\Invoice;
 use App\Models\InvoiceDetail;
+use App\Models\Payment;
 use Carbon\Carbon;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -144,5 +145,32 @@ class InvoiceRepository
             ->exists();
 
         return $existingInvoice;
+    }
+
+    public function delete(int $id)
+    {
+        $invoice = Invoice::find($id);
+
+        if (!$invoice) {
+            throw new \Exception('Hóa đơn không tồn tại', 404);
+        }
+
+        if ($invoice->status == 1) {
+            throw new \Exception('Hóa đơn đã thanh toán không thể xóa!', 422 );
+        }
+
+        $invoiceDetails = InvoiceDetail::where('invoice_id', $id)->get();
+        foreach ($invoiceDetails as $detail) {
+            $detail->delete();
+        }
+
+        $payments = Payment::where('invoice_id', $id)->get();
+        foreach ($payments as $payment) {
+            $payment->delete();
+        }
+
+        $invoice->delete();
+
+        return $invoice;
     }
 }

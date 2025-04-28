@@ -38,6 +38,12 @@ class VehicleRepository
         return $vehicles;
     }
 
+    public function findById($id)
+    {
+        $vehicle = Vehicle::where('vehicle_id', $id)->first();
+        return $vehicle;
+    }
+
     public function checkVehicleSlot($slot, $vehicleId = null) {
         $query = Vehicle::where('parking_slot', $slot);
     
@@ -100,5 +106,11 @@ class VehicleRepository
             'inactive_date' => $inactive_date,
         ]);
         return $update;
+    }
+
+    public function delete($id)
+    {
+        $vehicle = Vehicle::where('vehicle_id', $id)->delete();
+        return $vehicle;
     }
 }

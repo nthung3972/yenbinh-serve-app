@@ -109,4 +109,13 @@ class VehicleService
         
         return $vehicle;
     }
+
+    public function delete(int $id)
+    {
+        $vehicle = $this->vehicleRepository->findById($id);
+        if (!$vehicle) {
+            throw new \Exception("Xe không tồn tại!", 422);
+        }
+        return $this->vehicleRepository->delete($id);
+    }
 }

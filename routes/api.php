@@ -105,6 +105,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create', [InvoiceController::class, 'create']);
             Route::get('/edit/{id}', [InvoiceController::class, 'show']);
             Route::post('/update/{id}', [InvoiceController::class, 'update']);
+            Route::delete('/delete/{id}', [InvoiceController::class, 'destroy']);
         });
 
         //payment
@@ -125,6 +126,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/create', [VehicleController::class, 'create']);
             Route::get('/edit/{id}', [VehicleController::class, 'edit']);
             Route::post('/update/{id}', [VehicleController::class, 'update']);
+            Route::delete('/delete/{id}', [VehicleController::class, 'destroy']);
         });
 
         //vehicle_types
@@ -152,6 +154,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'staff'], function () {
             Route::get('/staff-list', [StaffController::class, 'getListStaff']);
             Route::post('/create-staff', [StaffController::class, 'createStaff']);
+            Route::get('/staff-detail/{id}', [StaffController::class, 'getStaffDetail']);
             Route::delete('/delete-staff/{id}', [StaffController::class, 'deleteStaff']);
         });
 

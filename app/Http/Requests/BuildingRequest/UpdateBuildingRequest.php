@@ -32,6 +32,8 @@ class UpdateBuildingRequest extends FormRequest
             'floors' => 'required|integer|min:1',
             'image' => 'nullable|string',
             'total_area' => 'required|numeric|min:0',
+            'management_fee_per_m2' => 'required|numeric|min:0',
+            'management_board_fee_per_m2' => 'required|numeric|min:0',
             'status' => 'required|integer|in:0,1',
             'building_type' => 'required|string|in:residential,commercial,mixed'
         ];

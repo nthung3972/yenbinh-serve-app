@@ -36,7 +36,43 @@ class BuildingRepository
 
     public function getBuildingByID(int $id)
     {
-        return Building::findOrFail($id);
+        return Building::where('building_id', $id)
+            ->withCount('apartments')
+            ->withCount([
+                'apartments as occupied_apartments' => function ($query) {
+                    $query->whereHas('residents');
+                }
+            ])
+            ->withCount([
+                'apartments as empty_apartments' => function ($query) {
+                    $query->whereDoesntHave('residents');
+                }
+            ])
+            ->withCount([
+                'apartments as residents_count' => function ($query) {
+                    $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+                }
+            ])
+            ->first();
+
+
+        // $buildings = Building::withCount('apartments')
+        // ->withCount([
+        //     'apartments as occupied_apartments' => function ($query) {
+        //         $query->whereHas('residents');
+        //     }
+        // ])
+        // ->withCount([
+        //     'apartments as empty_apartments' => function ($query) {
+        //         $query->whereDoesntHave('residents');
+        //     }
+        // ])
+        // ->withCount([
+        //     'apartments as residents_count' => function ($query) {
+        //         $query->join('apartment_resident', 'apartments.apartment_id', '=', 'apartment_resident.apartment_id');
+        //     }
+        // ])
+        // ->get();
     }
 
     public function updateBuilding(int $id, array $request)
