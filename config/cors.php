@@ -22,6 +22,8 @@ return [
     // 'allowed_origins' => ['https://yenbinh-web-app.vercel.app'],
     'allowed_origins' => ['https://yenbinhmanagement.vn'],
 
+    // 'allowed_origins' => ['*'],
+
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
