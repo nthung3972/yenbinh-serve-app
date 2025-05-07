@@ -19,17 +19,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // 'allowed_origins' => ['https://yenbinh-web-app.vercel.app'],
     'allowed_origins' => ['https://yenbinhmanagement.vn'],
-
-    // 'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [
-        'Content-Disposition', // Quan trọng để frontend đọc tên file
+        'Content-Disposition',
     ],
 
     'max_age' => 0,
