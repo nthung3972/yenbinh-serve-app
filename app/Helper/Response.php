@@ -31,9 +31,11 @@ class Response
      * @param string $message
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function dataError($code = 401, $data = [], $message = 'Error')
+    public static function dataError($code = 422, $data = [], $message = 'Error')
     {
-        if(!$code) $code = 401;
+        // Đảm bảo $code luôn là một số nguyên
+        $code = is_numeric($code) ? (int)$code : 422;
+
         $dataFormat = [
             'success' => false,
             'data' => $data,

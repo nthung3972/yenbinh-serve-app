@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('apartments', function (Blueprint $table) {
-            $table->increments('apartment_id');
-            $table->string('number', 10);
-            $table->integer('floor');
-            $table->float('area');
-            $table->boolean('status')->default('0')->comment('0 = đang sử dụng, 1 = để trống');
+        Schema::create('building_vehicle_fees', function (Blueprint $table) {
+            $table->increments('building_vehicle_fee_id');
             $table->integer('building_id');
-            $table->integer('resident_id');
+            $table->integer('vehicle_type_id');
+            $table->decimal('parking_fee',10,2);
             $table->timestamps();
         });
     }
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('apartments');
+        Schema::dropIfExists('building_vehicle_fees');
     }
 };

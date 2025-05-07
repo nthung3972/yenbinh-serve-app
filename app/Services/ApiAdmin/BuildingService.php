@@ -16,9 +16,12 @@ class BuildingService
     ) {
     }
 
-    public function getListBuilding(array $request)
+    public function getListBuilding($request)
     {
-        return $this->buildingRepository->getListBuilding($request);
+        return $this->buildingRepository->getListBuilding(
+            $request->per_page ?? config('constant.paginate'),
+            $request->keyword
+        );
     }
 
     public function createBuilding(array $request)
@@ -33,6 +36,32 @@ class BuildingService
 
     public function updateBuilding(int $id, array $request)
     {
-        return $this->buildingRepository->updateBuilding($id, $request);
+        $findBuilding = $this->buildingRepository->getBuildingByID($id);
+        if ($findBuilding) {
+            return $this->buildingRepository->updateBuilding($id, $request);
+        }
+    }
+
+    public function delete(int $id)
+    {
+        $findBuilding = $this->buildingRepository->getBuildingByID($id);
+        if ($findBuilding) {
+            return $this->buildingRepository->deleteBuilding($id);
+        }
+    }
+
+    public function statsAllBuildings($user)
+    {
+        return $this->buildingRepository->statsAllBuildings($user);
+    }
+
+    public function isAssigned($user, $id) 
+    {
+        return $this->buildingRepository->isAssigned($user, $id);
+    }
+
+    public function statsBuildingById(int $id)
+    {
+        return $this->buildingRepository->statsBuildingById($id);
     }
 }

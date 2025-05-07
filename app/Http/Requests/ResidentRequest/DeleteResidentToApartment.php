@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ResidentRequest;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBuildingRequest extends FormRequest
+class DeleteResidentToApartment extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,8 @@ class CreateBuildingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'resident_id' => 'required|exists:residents,resident_id',
+            'apartment_id' => 'required|exists:apartments,apartment_id',
         ];
     }
 }
