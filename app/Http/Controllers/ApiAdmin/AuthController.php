@@ -101,7 +101,7 @@ class AuthController extends Controller
         
         if (!$user) {
             // return redirect('http://localhost:3000/auth/verify-failed');
-            return redirect('https://yenbinh-web-app.vercel.app/auth/verify-failed');
+            return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
 
             // return response()->json([
             //     'message' => 'Token xác thực không hợp lệ!'
@@ -115,7 +115,7 @@ class AuthController extends Controller
             $user->save();
 
             // redirect('http://localhost:3000/auth/verify-failed');
-            return redirect('https://yenbinh-web-app.vercel.app/auth/verify-failed');
+            return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
             
             // return response()->json([
             //     'message' => 'Token xác thực đã hết hạn! Vui lòng đăng nhập lại để nhận token mới.',
@@ -129,7 +129,7 @@ class AuthController extends Controller
         $user->save();
 
         // return redirect('http://localhost:3000/auth/email-verified-success');
-        return redirect('https://yenbinh-web-app.vercel.app/auth/email-verified-success');
+        return redirect('https://yenbinhmanagement.vn/auth/email-verified-success');
 
         // Xác thực thành công
         // return response()->json([
