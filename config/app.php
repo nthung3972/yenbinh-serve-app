@@ -212,6 +212,7 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'ExampleClass' => App\Example\ExampleClass::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'Log' => Illuminate\Support\Facades\Log::class,
     ])->toArray(),
 
 ];
