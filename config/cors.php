@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => ['https://yenbinhmanagement.vn', 'https://www.yenbinhmanagement.vn'],
-
+    
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
