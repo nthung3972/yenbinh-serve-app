@@ -100,7 +100,7 @@ class AuthController extends Controller
         $user = $this->userService->checkVerificationToken($token);
         
         if (!$user) {
-            return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
+            return redirect(config('app.frontend_url') . '/auth/verify-failed');
 
             // return response()->json([
             //     'message' => 'Token xác thực không hợp lệ!'
@@ -113,7 +113,7 @@ class AuthController extends Controller
             $user->token_expiry = null;
             $user->save();
 
-            return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
+            return redirect(config('app.frontend_url') . '/auth/verify-failed');
             
             // return response()->json([
             //     'message' => 'Token xác thực đã hết hạn! Vui lòng đăng nhập lại để nhận token mới.',
@@ -126,7 +126,7 @@ class AuthController extends Controller
         $user->token_expiry = null;
         $user->save();
 
-        return redirect('https://yenbinhmanagement.vn/auth/email-verified-success');
+        return redirect(config('app.frontend_url') . '/auth/email-verified-success');
 
         // Xác thực thành công
         // return response()->json([

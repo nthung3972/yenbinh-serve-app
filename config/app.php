@@ -54,7 +54,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://api.yenbinhmanagement.vn'),
 
     'asset_url' => env('ASSET_URL', '/'),
 
@@ -153,6 +153,8 @@ return [
     | this array to grant expanded functionality to your applications.
     |
     */
+
+    'frontend_url' => env('FRONTEND_URL', 'https://yenbinhmanagement.vn'),
 
     'providers' => [
 
