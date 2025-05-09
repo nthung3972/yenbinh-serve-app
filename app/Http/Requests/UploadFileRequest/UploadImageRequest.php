@@ -23,7 +23,8 @@ class UploadImageRequest extends FormRequest
     {
         return [
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'old_avatar' => 'nullable|string'
+            'folder' => 'nullable|string',
+            'old_path' => 'nullable|string'
         ];
     }
 
@@ -37,7 +38,7 @@ class UploadImageRequest extends FormRequest
             'image.max' => 'Kích thước ảnh không được vượt quá 2MB.',
 
             // Messages cho trường 'old_avatar'
-            'old_avatar.string' => 'URL avatar cũ phải là một chuỗi ký tự hợp lệ.'
+            'old_path.string' => 'URL avatar cũ phải là một chuỗi ký tự hợp lệ.'
         ];
     }
 }

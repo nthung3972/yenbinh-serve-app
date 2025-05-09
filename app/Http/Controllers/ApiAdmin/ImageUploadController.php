@@ -6,42 +6,53 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helper\Response;
 use App\Http\Requests\UploadFileRequest\UploadImageRequest;
+use Illuminate\Support\Facades\Storage;
 
 class ImageUploadController extends Controller
 {
     public function upload(UploadImageRequest $request)
     {
         if ($request->hasFile('image')) {
+            $folder = $request->input('folder', 'uploads');
+
             $file = $request->file('image');
 
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 
-            $extension = $file->getClientOriginalExtension();
-
             $sanitizedName = $this->sanitizeFilename($originalName);
 
-            $fileName = time() . '_' . $sanitizedName . '.' . $extension;
+            $extension = $file->getClientOriginalExtension();
 
-            $fileContent = file_get_contents($file->getRealPath());
+            $fileName = $folder . '_' . time() . '_' . $sanitizedName . '.' . $extension;
 
-            $supabase = app('supabase');
+            // dd([
+            //     'APP_URL' => config('app.url'),
+            //     'Storage URL' => Storage::url("{$folder}/{$fileName}"),
+            //     'Full URL' => asset(Storage::url("{$folder}/{$fileName}")),
+            // ]);
 
             try {
-                $oldAvatar = $request->input('old_avatar'); 
+                // Xóa ảnh cũ nếu được truyền vào
+                if ($request->filled('old_path')) {
+                    $oldUrl = $request->input('old_path');
+                    $baseUrl = rtrim(config('app.url'), '/');
                 
-                if ($oldAvatar) {
-                    $oldFileName = basename($oldAvatar);
-                    $supabase->__getStorage()->from('images')->remove([$oldFileName]);
+                    // Loại bỏ phần domain để còn lại path: storage/building/xxx.png
+                    $relativePath = str_replace("{$baseUrl}/storage/", '', $oldUrl);
+                
+                    // Xóa file trong storage/app/public
+                    Storage::disk('public')->delete($relativePath);
                 }
 
-                $result = $supabase->__getStorage()->from('images')->upload(
-                    $fileName,
-                    $fileContent,
-                    ['contentType' => $file->getMimeType()]
-                );
+                // Lưu ảnh mới
+                $path = $file->storeAs("public/{$folder}", $fileName);
 
-                $fileUrl = $supabase->__getStorage()->from('images')->getPublicUrl('/'.$fileName);
-                return Response::data(['path' => $fileUrl]);
+                // Trả về URL đầy đủ
+                $relativePath = Storage::url("{$folder}/{$fileName}");
+                $baseUrl = config('app.url');
+                $url = rtrim($baseUrl, '/') . $relativePath;
+
+                return Response::data(['path' => $url]);
             } catch (\Throwable $th) {
                 return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
             }
