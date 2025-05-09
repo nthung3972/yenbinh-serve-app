@@ -100,7 +100,6 @@ class AuthController extends Controller
         $user = $this->userService->checkVerificationToken($token);
         
         if (!$user) {
-            // return redirect('http://localhost:3000/auth/verify-failed');
             return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
 
             // return response()->json([
@@ -114,7 +113,6 @@ class AuthController extends Controller
             $user->token_expiry = null;
             $user->save();
 
-            // redirect('http://localhost:3000/auth/verify-failed');
             return redirect('https://yenbinhmanagement.vn/auth/verify-failed');
             
             // return response()->json([
@@ -128,7 +126,6 @@ class AuthController extends Controller
         $user->token_expiry = null;
         $user->save();
 
-        // return redirect('http://localhost:3000/auth/email-verified-success');
         return redirect('https://yenbinhmanagement.vn/auth/email-verified-success');
 
         // Xác thực thành công
