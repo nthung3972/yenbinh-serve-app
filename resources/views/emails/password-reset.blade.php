@@ -9,7 +9,10 @@
     <p>Chào {{ $user->name }},</p>
     <p>Bạn vừa yêu cầu đặt lại mật khẩu. Nhấn vào link bên dưới để đặt lại:</p>
     <p>
-        <a href="http://localhost:3000/auth/password/reset?token={{ $token }}&email={{ urlencode($user->email) }}">
+        <!-- <a href="http://localhost:3000/auth/password/reset?token={{ $token }}&email={{ urlencode($user->email) }}">
+            Đặt lại mật khẩu
+        </a> -->
+        <a href="{{ config('app.frontend_url') . '/auth/password/reset?token=' . $token . '&email=' . urlencode($user->email) }}">
             Đặt lại mật khẩu
         </a>
     </p>
