@@ -16,7 +16,8 @@ class ResidentService
         return $this->residentRepository->getListResident(
             $id, 
             $request->per_page ?? config('constant.paginate'),
-            $request->keyword
+            $request->keyword,
+            $request->status,
         );
     }
 

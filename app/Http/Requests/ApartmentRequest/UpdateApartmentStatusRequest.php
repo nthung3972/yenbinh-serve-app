@@ -35,7 +35,9 @@ class UpdateApartmentStatusRequest extends FormRequest
             'building_id' => 'required|exists:buildings,building_id',
             'area' => 'required',
             'floor_number' => 'required',
-            'ownership_type' => 'required|string|in:studio,2bedroom,3bedroom,4bedroom,penthouse,duplex',
+            'apartment_type' => 'nullable|string|in:studio,1bedroom,2bedroom,3bedroom,penthouse,duplex,dualkey',
+            'ownership_type' => 'nullable|string|in:own,lease,lease_back,mortgage,shared_ownership',
+            'notes' => 'nullable|string|max:255',
         ];
     }
 

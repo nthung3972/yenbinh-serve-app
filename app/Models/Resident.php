@@ -29,11 +29,19 @@ class Resident extends Model
     public function apartments()
     {
         return $this->belongsToMany(Apartment::class, 'apartment_resident', 'resident_id', 'apartment_id')
-            ->withPivot(['role_in_apartment', 'registration_date', 'registration_status']);
+            ->withPivot(['role_in_apartment', 'registration_date', 'registration_status', 'move_out_date']);
     }
 
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+
+    public function currentApartments()
+    {
+        return $this->belongsToMany(Apartment::class, 'apartment_resident', 'resident_id', 'apartment_id')  
+            ->withPivot('role_in_apartment', 'registration_date', 'move_out_date')
+            ->wherePivotNull('move_out_date');
     }
 }
