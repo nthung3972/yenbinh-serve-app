@@ -44,6 +44,7 @@ class AddResidentToApartment extends FormRequest
             // Kiểm tra xem cư dân đã sở hữu căn hộ này chưa
             $existingOwnership = ApartmentResident::where('resident_id', $this->input('resident_id'))
                 ->where('apartment_id', $apartment->apartment_id)
+                ->whereNull('move_out_date')
                 ->exists();
 
             if ($existingOwnership) {
@@ -54,6 +55,7 @@ class AddResidentToApartment extends FormRequest
             // Kiểm tra căn hộ đã có chủ sở hữu chưa (role = 0)
             $existingOwner = ApartmentResident::where('apartment_id', $apartment->apartment_id)
                 ->where('role_in_apartment', 0)
+                ->whereNull('move_out_date')
                 ->exists();
 
             if ($existingOwner && $this->input('role_in_apartment') == 0) {

@@ -61,7 +61,7 @@ class ApartmentController extends Controller
     public function update(UpdateApartmentStatusRequest $request, $id)
     {
         try {
-            $update = $this->apartmentService->update($request->only(['apartment_number', 'area', 'building_id', 'floor_number', 'ownership_type']), $id);
+            $update = $this->apartmentService->update($request->only(['apartment_number', 'area', 'building_id', 'floor_number', 'ownership_type', 'apartment_type', 'notes']), $id);
             return Response::data(['data' => $update]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());

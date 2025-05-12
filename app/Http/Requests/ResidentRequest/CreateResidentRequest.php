@@ -51,6 +51,7 @@ class CreateResidentRequest extends FormRequest
                         // Kiểm tra căn hộ đã có chủ hộ chưa
                         $existingOwner = ApartmentResident::where('apartment_id', $existingApartment->apartment_id)
                             ->where('role_in_apartment', 0)
+                            ->whereNull('move_out_date')
                             ->exists();
 
                         // Nếu đã có chủ hộ nhưng vẫn thêm cư dân có role = 0 => Báo lỗi
@@ -61,6 +62,7 @@ class CreateResidentRequest extends FormRequest
                         // Kiểm tra căn hộ đã người thuê chính hay chưa
                         $existingTenant = ApartmentResident::where('apartment_id', $existingApartment->apartment_id)
                             ->where('role_in_apartment', 1)
+                            ->whereNull('move_out_date')
                             ->exists();
 
                         // Nếu đã có người thuê chính nhưng vẫn thêm cư dân có role = 1 => Báo lỗi

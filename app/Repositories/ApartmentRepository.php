@@ -18,19 +18,19 @@ class ApartmentRepository
             $query->where('apartment_number', 'LIKE', "%$keyword%");
         }
         if (!is_null($apartment_type)) {
-            $query->where('ownership_type', $apartment_type);
+            $query->where('apartment_type', $apartment_type);
         }
 
         if (!empty($status)) {
             if ($status === 'occupied') {
-                $query->whereHas('residents'); 
+                $query->whereHas('currentResidents'); 
             } elseif ($status === 'vacant') {
-                $query->whereDoesntHave('residents');
+                $query->whereDoesntHave('currentResidents');
             }
         }
 
         $query->orderBy('created_at', 'desc');
-        $apartments = $query->with('residents')
+        $apartments = $query->with('currentResidents')
             ->paginate($perPage);
 
         return $apartments;

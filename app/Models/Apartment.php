@@ -20,6 +20,8 @@ class Apartment extends Model
         'area',
         'building_id',
         'ownership_type',
+        'apartment_type',
+        'notes',
         'updated_by'
     ];
 
@@ -54,4 +56,11 @@ class Apartment extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function currentResidents()
+{
+    return $this->belongsToMany(Resident::class, 'apartment_resident', 'apartment_id', 'resident_id')
+        ->withPivot('role_in_apartment', 'registration_date', 'registration_status', 'move_out_date', 'notes')
+        ->wherePivotNull('move_out_date');
+}
 }
