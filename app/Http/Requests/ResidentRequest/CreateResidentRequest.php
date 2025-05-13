@@ -25,7 +25,7 @@ class CreateResidentRequest extends FormRequest
     {
         return [
             // Thông tin cư dân
-            'full_name' => 'nullable|string|max:255',
+            'full_name' => 'required|string|max:255',
             'id_card_number' => 'nullable|unique:residents,id_card_number',
             'date_of_birth' => 'nullable|date',
             'gender' => 'required|string|max:255',
@@ -70,6 +70,11 @@ class CreateResidentRequest extends FormRequest
                             $fail("Căn hộ {$apartment['apartment_number']} đã có người thuê chính.");
                         }
 
+                        // Nếu chưa có người thuê chính nhưng vẫn thêm cư dân có role = 3 => Báo lỗi
+                        if (!$existingTenant && $apartment['role_in_apartment'] == 3) {
+                            $fail("Căn hộ {$apartment['apartment_number']} chưa có người thuê chính, người thuê đầu tiên phải là người thuê chính.");
+                        }
+
                          // Nếu chưa có chủ hộ nhưng cư dân đầu tiên không phải chủ hộ => Báo lỗi
                          if (!$existingOwner && !$existingTenant && $apartment['role_in_apartment'] != 0  && $apartment['role_in_apartment'] != 1) {
                             $fail("Căn hộ {$apartment['apartment_number']} chưa có chủ hộ. Cư dân đầu tiên phải là chủ hộ hoặc người thuê chính.");
@@ -89,7 +94,7 @@ class CreateResidentRequest extends FormRequest
 
             // Kiểm tra từng căn hộ
             'apartments.*.apartment_number' => 'required|string',
-            'apartments.*.role_in_apartment' => 'required|in:0,1,2',
+            'apartments.*.role_in_apartment' => 'required|in:0,1,2,3',
             'apartments.*.notes' => 'nullable|string',
         ];
     }
