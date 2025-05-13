@@ -2,17 +2,21 @@
 
 namespace App\Repositories;
 
+use App\Models\Apartment;
+use App\Models\Resident;
 use App\Models\Vehicle;
+use App\Models\VehicleType;
 use Carbon\Carbon;
 
 
 class VehicleRepository
 {
-    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null, $status = null)
+    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type_id = null, $status = null)
     {
         $query = Vehicle::with('updatedBy', 'vehicleType')->select('vehicles.*', 'apartments.apartment_number')
-        ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
-        ->where('vehicles.building_id', $building_id);
+            ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
+            ->join('vehicle_types', 'vehicles.vehicle_type_id', '=', 'vehicle_types.vehicle_type_id')
+            ->where('vehicles.building_id', $building_id);
 
         if (!empty($keyword)) {
             $query->where(function ($q) use ($keyword) {
@@ -21,8 +25,8 @@ class VehicleRepository
             });
         }
 
-        if (!empty($vehicle_type)) {
-            $query->where('vehicle_type', 'LIKE', "%$vehicle_type%");
+        if (!is_null($vehicle_type_id)) {
+            $query->where('vehicle_types.vehicle_type_id',  $vehicle_type_id);
         }
 
         if (!is_null($status)) {
@@ -44,21 +48,23 @@ class VehicleRepository
         return $vehicle;
     }
 
-    public function checkVehicleSlot($slot, $vehicleId = null) {
+    public function checkVehicleSlot($slot, $vehicleId = null)
+    {
         $query = Vehicle::where('parking_slot', $slot);
-    
+
         if ($vehicleId) {
             $query->where('vehicle_id', '!=', $vehicleId);
         }
-        
+
         return $query->exists();
     }
 
-    public function create(array $request) {
+    public function create(array $request)
+    {
 
         $user = auth()->user();
 
-        foreach($request as $vehicle) {
+        foreach ($request as $vehicle) {
             Vehicle::create([
                 'license_plate' => $vehicle['license_plate'],
                 'vehicle_type_id' => $vehicle['vehicle_type_id'],
@@ -70,6 +76,7 @@ class VehicleRepository
                 'building_id' => $vehicle['building_id'],
                 'resident_id' => $vehicle['resident_id'],
                 'apartment_id' => $vehicle['apartment_id'],
+                'notes' => $vehicle['notes'],
                 'created_at' => $vehicle['created_at'],
                 'updated_by' => $user->id,
             ]);
@@ -78,7 +85,31 @@ class VehicleRepository
 
     public function edit(int $id)
     {
-        $vehicle = Vehicle::with('apartment', 'resident')->where('vehicle_id', $id)->first();
+        $vehicle = Vehicle::query()
+            ->select('vehicles.*')
+            ->addSelect([
+                'vehicle_type_name' => VehicleType::select('vehicle_type_name')
+                    ->whereColumn('vehicle_types.vehicle_type_id', 'vehicles.vehicle_type_id')
+                    ->limit(1),
+
+                'resident_full_name' => Resident::select('full_name')
+                    ->whereColumn('residents.resident_id', 'vehicles.resident_id')
+                    ->limit(1),
+
+                'resident_email' => Resident::select('email')
+                    ->whereColumn('residents.resident_id', 'vehicles.resident_id')
+                    ->limit(1),
+
+                'resident_phone' => Resident::select('phone_number')
+                    ->whereColumn('residents.resident_id', 'vehicles.resident_id')
+                    ->limit(1),
+
+                'apartment_number' => Apartment::select('apartment_number')
+                    ->whereColumn('apartments.apartment_id', 'vehicles.apartment_id')
+                    ->limit(1),
+            ])
+            ->where('vehicle_id', $id)
+            ->first();
         return $vehicle;
     }
 
@@ -87,7 +118,7 @@ class VehicleRepository
         $inactive_date = null;
         $user = auth()->user();
 
-        if($request['status'] === 1) {
+        if ($request['status'] === 1) {
             $inactive_date = Carbon::now();
         }
 

@@ -41,7 +41,7 @@ class Resident extends Model
     public function currentApartments()
     {
         return $this->belongsToMany(Apartment::class, 'apartment_resident', 'resident_id', 'apartment_id')  
-            ->withPivot('role_in_apartment', 'registration_date', 'move_out_date')
+            ->withPivot('role_in_apartment', 'registration_date', 'registration_status', 'move_out_date')
             ->wherePivotNull('move_out_date');
     }
 }

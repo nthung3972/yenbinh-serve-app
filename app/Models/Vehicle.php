@@ -14,7 +14,7 @@ class Vehicle extends Model
 
     protected $primaryKey = 'vehicle_id';
 
-    protected $appends = ['apartment_number', 'full_name'];
+    protected $appends = ['apartment_number', 'full_name', 'vehicle_type_name'];
 
     protected $fillable = [
         'license_plate',
@@ -29,7 +29,8 @@ class Vehicle extends Model
         'vehicle_company',
         'vehicle_model',
         'vehicle_color',
-        'vehicle_type_id'
+        'vehicle_type_id',
+        'notes',
     ];
 
     public function apartment()
@@ -47,16 +48,6 @@ class Vehicle extends Model
         return $this->belongsTo(Building::class, 'building_id', 'building_id');
     }
 
-    public function getFullNameAttribute()
-    {
-        return $this->resident->full_name ?? null;
-    }
-
-    public function getApartmentNumberAttribute()
-    {
-        return $this->apartment->apartment_number ?? null;
-    }
-
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('Y-m-d');
@@ -70,5 +61,40 @@ class Vehicle extends Model
     public function vehicleType()
     {
         return $this->belongsTo(VehicleType::class, 'vehicle_type_id', 'vehicle_type_id');
+    }
+
+    public function getVehicleTypeNameAttribute()
+    {
+        return $this->attributes['vehicle_type_name']
+            ?? $this->vehicleType->vehicle_type_name 
+            ?? null;
+    }
+
+    public function getFullNameAttribute()
+    {
+        $residentFullName =  $this->attributes['resident_full_name']
+            ?? $this->resident->full_name
+            ?? null;
+
+        $resdientEmail =  $this->attributes['resident_email']
+            ?? $this->resident->email
+            ?? null;
+
+        $residentPhone =  $this->attributes['resident_phone']
+            ?? $this->resident->phone
+            ?? null;
+
+        return [
+            'resident_full_name' => $residentFullName,
+            'resident_email' => $resdientEmail,
+            'resident_phone' => $residentPhone,
+        ];
+    }
+
+    public function getApartmentNumberAttribute()
+    {
+        return $this->attributes['apartment_number']
+            ?? $this->apartment->apartment_number
+            ?? null;
     }
 }

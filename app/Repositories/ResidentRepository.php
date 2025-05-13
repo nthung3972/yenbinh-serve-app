@@ -12,30 +12,55 @@ class ResidentRepository
 {
     public function getListResident($building_id, $perPage = '', $keyword = null, $status = null)
     {
-        $query = Resident::whereHas('apartments', function ($q) use ($building_id, $status) {
-            $q->where('building_id', $building_id);
+        // Bắt đầu với query cơ bản
+        $query = Resident::query();
 
-            if ($status === 'active') {
-                $q->whereNull('apartment_resident.move_out_date');
-            } elseif ($status === 'inactive') {
-                $q->whereNotNull('apartment_resident.move_out_date');
-            }
-        })->with([
+        // Áp dụng lọc theo trạng thái
+        if ($status === 'active') {
+            // Cư dân đang ở ít nhất một căn hộ trong tòa nhà
+            $query->whereHas('apartments', function ($q) use ($building_id) {
+                $q->where('building_id', $building_id)
+                    ->whereNull('apartment_resident.move_out_date');
+            });
+        } elseif ($status === 'inactive') {
+            // Cư dân đã từng ở trong tòa nhà này
+            $query->whereHas('apartments', function ($q) use ($building_id) {
+                $q->where('building_id', $building_id);
+            });
+
+            // Nhưng không còn ở căn hộ nào trong tòa nhà này nữa
+            // (không có căn hộ nào trong tòa nhà mà move_out_date là null)
+            $query->whereDoesntHave('apartments', function ($q) use ($building_id) {
+                $q->where('building_id', $building_id)
+                    ->whereNull('apartment_resident.move_out_date');
+            });
+        } else {
+            // Trường hợp không có status, lấy tất cả cư dân của tòa nhà
+            $query->whereHas('apartments', function ($q) use ($building_id) {
+                $q->where('building_id', $building_id);
+            });
+        }
+
+        // Tìm kiếm theo từ khóa
+        if (!empty($keyword)) {
+            $query->where('full_name', 'LIKE', "%$keyword%");
+        }
+
+        // Eager loading để lấy thông tin liên quan
+        $query = $query->with([
             'updatedBy',
             'apartments' => function ($q) use ($building_id, $status) {
                 $q->where('building_id', $building_id);
 
+                // Chỉ lấy các căn hộ phù hợp với trạng thái đã chọn
                 if ($status === 'active') {
                     $q->whereNull('apartment_resident.move_out_date');
                 } elseif ($status === 'inactive') {
-                    $q->whereNotNull('apartment_resident.move_out_date');
+                    // Trong trường hợp inactive, lấy tất cả các căn hộ mà cư dân đã từng ở
+                    // (bao gồm cả căn hộ đã rời đi)
                 }
             }
         ]);
-
-        if (!empty($keyword)) {
-            $query->where('full_name', 'LIKE', "%$keyword%");
-        }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }

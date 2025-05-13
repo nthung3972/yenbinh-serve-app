@@ -33,7 +33,6 @@ class AddResidentToApartment extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // Kiểm tra tồn tại của căn hộ
             $apartment = Apartment::where('apartment_number', $this->input('apartment_number'))->first();
 
             if (!$apartment) {
@@ -52,19 +51,39 @@ class AddResidentToApartment extends FormRequest
                 return;
             }
 
-            // Kiểm tra căn hộ đã có chủ sở hữu chưa (role = 0)
+            $inputRole = $this->input('role_in_apartment');
+
+            // Kiểm tra căn hộ đã có chủ hộ chưa (role = 0)
             $existingOwner = ApartmentResident::where('apartment_id', $apartment->apartment_id)
                 ->where('role_in_apartment', 0)
                 ->whereNull('move_out_date')
                 ->exists();
 
-            if ($existingOwner && $this->input('role_in_apartment') == 0) {
-                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} đã có chủ sở hữu");
+            if ($existingOwner && $inputRole == 0) {
+                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} đã có chủ hộ.");
                 return;
             }
 
-            if (!$existingOwner && $this->input('role_in_apartment') != 0) {
-                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} trống, cư dân đầu tiên phải là chủ sở hữu căn hộ");
+            // Kiểm tra căn hộ đã có người thuê chính chưa (role = 1)
+            $existingTenant = ApartmentResident::where('apartment_id', $apartment->apartment_id)
+                ->where('role_in_apartment', 1)
+                ->whereNull('move_out_date')
+                ->exists();
+
+            if ($existingTenant && $inputRole == 1) {
+                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} đã có người thuê chính.");
+                return;
+            }
+
+            // Nếu chưa có người thuê chính nhưng thêm cư dân có role = 3 => lỗi
+            if (!$existingTenant && $inputRole == 3) {
+                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} chưa có người thuê chính, người thuê đầu tiên phải là người thuê chính.");
+                return;
+            }
+
+            // Nếu chưa có chủ hộ & chưa có người thuê chính nhưng role không phải là 0 hoặc 1 => lỗi
+            if (!$existingOwner && !$existingTenant && !in_array($inputRole, [0, 1])) {
+                $validator->errors()->add('role_in_apartment', "Căn hộ {$apartment->apartment_number} chưa có chủ hộ. Cư dân đầu tiên phải là chủ hộ hoặc người thuê chính.");
                 return;
             }
         });

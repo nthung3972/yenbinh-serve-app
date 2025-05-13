@@ -40,7 +40,7 @@ class VehicleController extends Controller
     {
         $filteredVehicles = [];
         foreach ($request->all() as $vehicle) {
-            $filteredVehicles[] = collect($vehicle)->only(['building_id', 'apartment_number', 'license_plate', 'vehicle_type_id', 'parking_slot', 'created_at', 'status', 'resident_id', 'vehicle_company', 'vehicle_model', 'vehicle_color'])->toArray();
+            $filteredVehicles[] = collect($vehicle)->only(['building_id', 'apartment_number', 'license_plate', 'vehicle_type_id', 'parking_slot', 'created_at', 'status', 'resident_id', 'vehicle_company', 'vehicle_model', 'vehicle_color', 'notes'])->toArray();
         }
 
         try {
