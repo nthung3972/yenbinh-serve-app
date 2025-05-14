@@ -10,6 +10,7 @@ class ApartmentResident extends Model
     use HasFactory;
 
     protected $table = 'apartment_resident';
+     public $timestamps = true;
     protected $primaryKey = null;
     public $incrementing = false;
 

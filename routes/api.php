@@ -42,6 +42,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         Route::group(['prefix' => 'export'], function () {
             Route::get('/invoices/{id}', [ExportController::class, 'exportPrintable']);
+            Route::post('/invoices/export', [ExportController::class, 'exportInvoices']);
         });
     });
 
@@ -137,6 +138,7 @@ Route::group(['prefix' => 'admin'], function () {
         //Export
         Route::group(['prefix' => 'export'], function () {
             Route::get('/invoices/{id}', [ExportController::class, 'exportPrintable']);
+            Route::post('/invoices/export', [ExportController::class, 'exportInvoices']);
         });
     });
 
