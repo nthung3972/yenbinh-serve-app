@@ -18,6 +18,7 @@ use App\Http\Controllers\ApiAdmin\FeeTypeController;
 use App\Http\Controllers\ApiAdmin\VehicleTypeController;
 use App\Http\Controllers\ApiAdmin\PaymentController;
 use App\Http\Controllers\ApiAdmin\DebtController;
+use App\Http\Controllers\ApiAdmin\BuildingPersonnelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,6 +129,15 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/edit/{id}', [VehicleController::class, 'edit']);
             Route::post('/update/{id}', [VehicleController::class, 'update']);
             Route::delete('/delete/{id}', [VehicleController::class, 'destroy']);
+        });
+
+        //building_personnel
+        Route::group(['prefix' => 'building-personnel'], function () {
+            Route::get('/list-by-building/{id}', [BuildingPersonnelController::class, 'getListBuildingPersonnel']);
+            Route::post('/create', [BuildingPersonnelController::class, 'create']);
+            // Route::get('/edit/{id}', [StaffController::class, 'editBuildingPersonnel']);
+            // Route::post('/update/{id}', [StaffController::class, 'updateBuildingPersonnel']);
+            // Route::delete('/delete/{id}', [StaffController::class, 'deleteBuildingPersonnel']);
         });
 
         //vehicle_types
