@@ -45,7 +45,19 @@ class BuildingPersonnelRepository
             'position' => $request['position'],
             'monthly_salary' => $request['monthly_salary'],
             'status' => $activeStatus,
+            'start_date' => $request['start_date'],
         ]);
         return $buildingPersonnel;
+    }
+
+    public function edit($id)
+    {
+        $personnel = BuildingPersonnel::where('building_personnel_id', $id)->first();
+        return $personnel;
+    }
+
+    public function update(int $id, array $request)
+    {
+        return BuildingPersonnel::where('building_personnel_id', $id)->update($request);
     }
 }

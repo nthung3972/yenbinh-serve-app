@@ -31,4 +31,17 @@ class BuildingPersonnelService
     {
         return $this->buildingPesonnelRepository->create($request);
     }
+
+    public function edit($id)
+    {
+        return $this->buildingPesonnelRepository->edit($id);
+    }
+
+    public function update(int $id, array $request)
+    {
+        $findBuilding = $this->buildingPesonnelRepository->edit($id);
+        if ($findBuilding) {
+            return $this->buildingPesonnelRepository->update($id, $request);
+        }
+    }
 }
