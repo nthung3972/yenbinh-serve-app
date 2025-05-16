@@ -20,7 +20,8 @@ class BuildingPersonnel extends Model
         'position',
         'status',
         'inactive_date',
-        'monthly_salary'
+        'monthly_salary',
+        'start_date'
     ];
 
     public function building()

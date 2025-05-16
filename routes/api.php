@@ -135,8 +135,8 @@ Route::group(['prefix' => 'admin'], function () {
         Route::group(['prefix' => 'building-personnel'], function () {
             Route::get('/list-by-building/{id}', [BuildingPersonnelController::class, 'getListBuildingPersonnel']);
             Route::post('/create', [BuildingPersonnelController::class, 'create']);
-            // Route::get('/edit/{id}', [StaffController::class, 'editBuildingPersonnel']);
-            // Route::post('/update/{id}', [StaffController::class, 'updateBuildingPersonnel']);
+            Route::get('/edit/{id}', [BuildingPersonnelController::class, 'edit']);
+            Route::put('/update/{id}', [BuildingPersonnelController::class, 'update']);
             // Route::delete('/delete/{id}', [StaffController::class, 'deleteBuildingPersonnel']);
         });
 

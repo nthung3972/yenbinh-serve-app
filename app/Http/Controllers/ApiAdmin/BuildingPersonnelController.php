@@ -8,6 +8,7 @@ use App\Services\ApiAdmin\BuildingPersonnelService;
 use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
 use App\Http\Requests\BuildingPersonnelRequest\CreateBuildingPersonnelRequest;
+use App\Http\Requests\BuildingPersonnelRequest\UpdateBuildingPersonnelRequest;
 
 class BuildingPersonnelController extends Controller
 {
@@ -45,6 +46,37 @@ class BuildingPersonnelController extends Controller
         try {
             $create = $this->buildingPersonnelService->create($request->all());
             return Response::data(['data' => $create]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function edit($id)
+    {
+        try {
+            $personnel = $this->buildingPersonnelService->edit($id);
+            return Response::data(['data' => $personnel]);
+        } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function update(int $id, UpdateBuildingPersonnelRequest $request)
+    {
+        try {
+            $update = $this->buildingPersonnelService->update($id, $request->only(
+                'building_id',
+                'personnel_name',
+                'personnel_birth',
+                'personnel_phone',
+                'personnel_address',
+                'start_date',
+                'inactive_date',
+                'position',
+                'monthly_salary',
+                'status'
+            ));
+            return Response::data(['data' => $update]);
         } catch (\Throwable $th) {
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
