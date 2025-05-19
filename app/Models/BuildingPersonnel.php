@@ -18,7 +18,10 @@ class BuildingPersonnel extends Model
         'personnel_phone',
         'personnel_address',
         'position',
-        'status'
+        'status',
+        'inactive_date',
+        'monthly_salary',
+        'start_date'
     ];
 
     public function building()
