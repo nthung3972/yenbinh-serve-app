@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Building;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DebtController extends Controller
@@ -14,17 +15,34 @@ class DebtController extends Controller
     {
         $perPage = $request->input('per_page', config('constant.paginate'));
 
-        // Xây dựng query cơ bản cho hóa đơn
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Build base query for invoices
         $baseQuery = Invoice::query()
             ->with(['apartment', 'apartment.residents', 'apartment.building'])
             ->when($request->filled('status') || $request->status === '0' || $request->status === 0, function ($q) use ($request) {
                 return $q->where('status', $request->status);
-            })
-            ->when($request->building_id, fn($q) => $q->whereHas('apartment', fn($q2) => $q2->where('building_id', $request->building_id)));
+            });
 
-        // Lọc theo thời gian
+        // Apply building filter based on user role
+        if ($user->role !== 'admin') {
+            // For staff, filter by assigned buildings from staff_assignments
+            $assignedBuildings = DB::table('staff_assignments')
+                ->where('staff_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+
+            $baseQuery->whereHas('apartment', function ($q2) use ($assignedBuildings) {
+                $q2->whereIn('building_id', $assignedBuildings);
+            });
+        } else {
+            // For admin, apply building_id filter only if provided
+            $baseQuery->when($request->building_id, fn($q) => $q->whereHas('apartment', fn($q2) => $q2->where('building_id', $request->building_id)));
+        }
+
+        // Apply time period filters
         if ($request->has('period_type') && $request->has('period_value') && $request->period_value !== null) {
-            // dd($request->period_value);
             if ($request->period_type === 'month') {
                 $baseQuery->whereYear('invoice_date', substr($request->period_value, 0, 4))
                     ->whereMonth('invoice_date', substr($request->period_value, 5, 2));
@@ -43,19 +61,110 @@ class DebtController extends Controller
             }
         }
 
-        // Tính tổng giá trị hóa đơn đã phát hành và đã thanh toán
+        // Calculate total issued and paid amounts
         $totals = (clone $baseQuery)->selectRaw('
             SUM(total_amount) as total_issued_amount,
             SUM(total_paid) as total_paid_amount
         ')->first();
 
-        // Query cho danh sách hóa đơn (chỉ lấy remaining_balance > 0)
-        $query = (clone $baseQuery)->where('remaining_balance', '>', 0);
+        // Query for total fees (management, parking, and management board)
+        $feeQuery = DB::table('apartments as a')
+            ->join('buildings as b', 'a.building_id', '=', 'b.building_id');
 
-        // Phân trang hóa đơn
+        // Apply building filter for feeQuery based on user role
+        if ($user->role !== 'admin') {
+            $feeQuery->whereIn('b.building_id', $assignedBuildings);
+        } else {
+            $feeQuery->when($request->building_id, function ($query, $buildingId) {
+                return $query->where('b.building_id', $buildingId);
+            });
+        }
+
+        $feeQuery = $feeQuery->selectRaw('
+            SUM(a.area) as total_area,
+            AVG(b.management_fee_per_m2) as management_fee_per_m2,
+            AVG(b.management_board_fee_per_m2) as management_board_fee_per_m2
+        ')->first();
+
+        // Calculate total management fee
+        $totalManagementFee = $feeQuery->total_area * $feeQuery->management_fee_per_m2;
+        $managementDescription = 'Tổng diện tích ' . number_format($feeQuery->total_area, 2, ',', '.') . 'm², phí ' . number_format($feeQuery->management_fee_per_m2, 0, ',', '.') . 'đ/m²';
+
+        // Calculate total management board fee
+        $totalManagementBoardFee = $feeQuery->management_board_fee_per_m2 
+            ? $feeQuery->total_area * $feeQuery->management_board_fee_per_m2 
+            : 0;
+        $managementBoardDescription = $feeQuery->management_board_fee_per_m2
+            ? 'Tổng diện tích ' . number_format($feeQuery->total_area, 2, ',', '.') . 'm², thù lao ' . number_format($feeQuery->management_board_fee_per_m2, 0, ',', '.') . 'đ/m²'
+            : 'Không có phí thù lao';
+
+        // Query for vehicle counts and parking fees
+        $parkingFeesQuery = DB::table('vehicles as v')
+            ->join('vehicle_types as vt', 'v.vehicle_type_id', '=', 'vt.vehicle_type_id')
+            ->join('apartments as a', 'v.apartment_id', '=', 'a.apartment_id')
+            ->join('building_vehicle_fees as bvf', function ($join) {
+                $join->on('bvf.vehicle_type_id', '=', 'vt.vehicle_type_id')
+                    ->on('bvf.building_id', '=', 'a.building_id');
+            });
+
+        // Apply building filter for parkingFees based on user role
+        if ($user->role !== 'admin') {
+            $parkingFeesQuery->whereIn('a.building_id', $assignedBuildings);
+        } else {
+            $parkingFeesQuery->when($request->building_id, function ($query, $buildingId) {
+                return $query->where('a.building_id', $buildingId);
+            });
+        }
+
+        $parkingFees = $parkingFeesQuery->groupBy('vt.vehicle_type_name', 'bvf.parking_fee')
+            ->selectRaw('
+                vt.vehicle_type_name,
+                COUNT(v.vehicle_id) as vehicle_count,
+                bvf.parking_fee as parking_fee_per_vehicle
+            ')
+            ->get();
+
+        // Calculate parking fees for each vehicle type
+        $carParkingFee = 0;
+        $motorbikeParkingFee = 0;
+        $bicycleParkingFee = 0;
+        $carDescriptionParts = [];
+        $motorbikeDescriptionParts = [];
+        $bicycleDescriptionParts = [];
+
+        foreach ($parkingFees as $fee) {
+            $amount = 0;
+            if ($fee->vehicle_type_name === 'Ô tô' && $fee->vehicle_count > 0) {
+                $firstCarFee = $fee->parking_fee_per_vehicle;
+                $additionalCarFee = $firstCarFee * 1.2;
+                if ($fee->vehicle_count == 1) {
+                    $amount = $firstCarFee;
+                } else {
+                    $amount = $firstCarFee + ($fee->vehicle_count - 1) * $additionalCarFee;
+                }
+                $carParkingFee += $amount;
+                $carDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} (1 x " . number_format($firstCarFee, 0, ',', '.') . "đ, " . ($fee->vehicle_count - 1) . " x " . number_format($additionalCarFee, 0, ',', '.') . "đ)";
+            } elseif ($fee->vehicle_type_name === 'Xe máy - xe máy điện' && $fee->vehicle_count > 0) {
+                $amount = $fee->vehicle_count * $fee->parking_fee_per_vehicle;
+                $motorbikeParkingFee += $amount;
+                $motorbikeDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} x " . number_format($fee->parking_fee_per_vehicle, 0, ',', '.') . "đ";
+            } elseif ($fee->vehicle_type_name === 'Xe đạp - xe đạp điện' && $fee->vehicle_count > 0) {
+                $amount = $fee->vehicle_count * $fee->parking_fee_per_vehicle;
+                $bicycleParkingFee += $amount;
+                $bicycleDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} x " . number_format($fee->parking_fee_per_vehicle, 0, ',', '.') . "đ";
+            }
+        }
+
+        $totalParkingFee = $carParkingFee + $motorbikeParkingFee + $bicycleParkingFee;
+        $carDescription = !empty($carDescriptionParts) ? implode(', ', $carDescriptionParts) : 'Không có ô tô';
+        $motorbikeDescription = !empty($motorbikeDescriptionParts) ? implode(', ', $motorbikeDescriptionParts) : 'Không có xe máy';
+        $bicycleDescription = !empty($bicycleDescriptionParts) ? implode(', ', $bicycleDescriptionParts) : 'Không có xe đạp';
+
+        // Query for paginated invoices (remaining_balance > 0)
+        $query = (clone $baseQuery);
         $paginatedInvoices = $query->paginate($perPage);
 
-        // Xử lý danh sách hóa đơn
+        // Process invoice list
         $invoices = collect($paginatedInvoices->items())->map(function ($invoice) {
             return [
                 'invoice_id' => $invoice->invoice_id,
@@ -70,10 +179,11 @@ class DebtController extends Controller
             ];
         });
 
-        // Tính tổng công nợ và công nợ quá hạn
+        // Calculate total and overdue debt
         $totalDebt = $invoices->sum('remaining_balance');
         $overdueDebt = $invoices->where('is_overdue', true)->sum('remaining_balance');
 
+        // Prepare response
         return response()->json([
             'message' => 'Debts retrieved successfully',
             'data' => [
@@ -82,6 +192,39 @@ class DebtController extends Controller
                 'overdue_debt' => $overdueDebt,
                 'total_issued_amount' => $totals->total_issued_amount ?? 0,
                 'total_paid_amount' => $totals->total_paid_amount ?? 0,
+                'total_fees' => [
+                    [
+                        'type' => 'Phí quản lý vận hành',
+                        'amount' => $totalManagementFee,
+                        'description' => $managementDescription
+                    ],
+                    [
+                        'type' => 'Phí gửi xe',
+                        'amount' => $totalParkingFee,
+                        'details' => [
+                            [
+                                'type' => 'Phí gửi xe ô tô',
+                                'amount' => $carParkingFee,
+                                'description' => $carDescription
+                            ],
+                            [
+                                'type' => 'Phí gửi xe máy',
+                                'amount' => $motorbikeParkingFee,
+                                'description' => $motorbikeDescription
+                            ],
+                            [
+                                'type' => 'Phí gửi xe đạp',
+                                'amount' => $bicycleParkingFee,
+                                'description' => $bicycleDescription
+                            ]
+                        ]
+                    ],
+                    [
+                        'type' => 'Thù lao ban quản trị',
+                        'amount' => $totalManagementBoardFee,
+                        'description' => $managementBoardDescription
+                    ]
+                ],
                 'pagination' => [
                     'current_page' => $paginatedInvoices->currentPage(),
                     'per_page' => $paginatedInvoices->perPage(),
@@ -91,63 +234,6 @@ class DebtController extends Controller
             ]
         ], 200);
     }
-
-    /**
-     * Apply time filter to the query based on period type and value
-     */
-    // private function applyTimeFilter($query, $request)
-    // {
-    //     if ($request->period_type === 'month') {
-    //         $year = substr($request->period_value, 0, 4);
-    //         $month = substr($request->period_value, 5, 2);
-    //         $query->whereYear('invoice_date', $year)
-    //             ->whereMonth('invoice_date', $month);
-    //     } elseif ($request->period_type === 'quarter') {
-    //         [$year, $quarter] = explode('-Q', $request->period_value);
-    //         $months = match ($quarter) {
-    //             '1' => [1, 2, 3],
-    //             '2' => [4, 5, 6],
-    //             '3' => [7, 8, 9],
-    //             '4' => [10, 11, 12]
-    //         };
-    //         $query->whereYear('invoice_date', $year)
-    //             ->whereIn(DB::raw('MONTH(invoice_date)'), $months);
-    //     } elseif ($request->period_type === 'year') {
-    //         $query->whereYear('invoice_date', $request->period_value);
-    //     }
-    // }
-
-    /**
-     * Get the total amount and total paid for invoices
-     */
-    // private function getInvoiceTotals($query)
-    // {
-    //     return $query->selectRaw('
-    //     SUM(total_amount) as total_issued_amount,
-    //     SUM(total_paid) as total_paid_amount
-    // ')->first() ?? ['total_issued_amount' => 0, 'total_paid_amount' => 0];
-    // }
-
-    /**
-     * Transform invoices to required format
-     */
-    // private function transformInvoices($paginatedInvoices)
-    // {
-    //     return collect($paginatedInvoices->items())->map(function ($invoice) {
-    //         return [
-    //             'invoice_id' => $invoice->invoice_id,
-    //             'building_name' => $invoice->apartment->building->name ?? 'N/A',
-    //             'apartment_number' => $invoice->apartment->apartment_number ?? 'N/A',
-    //             'resident_name' => $invoice->apartment->resident->name ?? 'N/A',
-    //             'total_amount' => $invoice->total_amount,
-    //             'remaining_balance' => $invoice->remaining_balance,
-    //             'due_date' => $invoice->due_date,
-    //             'status' => $invoice->status,
-    //             'invoice_date' => $invoice->invoice_date,
-    //             'is_overdue' => $invoice->due_date < now() && $invoice->remaining_balance > 0
-    //         ];
-    //     });
-    // }
 
     public function getDebtHistory(Request $request)
     {
