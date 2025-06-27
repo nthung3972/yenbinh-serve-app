@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\ApiAdmin;
 
 
@@ -14,8 +15,6 @@ class DebtController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', config('constant.paginate'));
-
-        // Get the authenticated user
         $user = Auth::user();
 
         // Build base query for invoices
@@ -25,9 +24,8 @@ class DebtController extends Controller
                 return $q->where('status', $request->status);
             });
 
-        // Apply building filter based on user role
+        // Phân quyền
         if ($user->role !== 'admin') {
-            // For staff, filter by assigned buildings from staff_assignments
             $assignedBuildings = DB::table('staff_assignments')
                 ->where('staff_id', $user->id)
                 ->pluck('building_id')
@@ -37,11 +35,10 @@ class DebtController extends Controller
                 $q2->whereIn('building_id', $assignedBuildings);
             });
         } else {
-            // For admin, apply building_id filter only if provided
             $baseQuery->when($request->building_id, fn($q) => $q->whereHas('apartment', fn($q2) => $q2->where('building_id', $request->building_id)));
         }
 
-        // Apply time period filters
+        // Lọc theo thời gian
         if ($request->has('period_type') && $request->has('period_value') && $request->period_value !== null) {
             if ($request->period_type === 'month') {
                 $baseQuery->whereYear('invoice_date', substr($request->period_value, 0, 4))
@@ -61,17 +58,16 @@ class DebtController extends Controller
             }
         }
 
-        // Calculate total issued and paid amounts
+        // Tổng phát hành và thanh toán
         $totals = (clone $baseQuery)->selectRaw('
-            SUM(total_amount) as total_issued_amount,
-            SUM(total_paid) as total_paid_amount
-        ')->first();
+        SUM(total_amount) as total_issued_amount,
+        SUM(total_paid) as total_paid_amount
+    ')->first();
 
-        // Query for total fees (management, parking, and management board)
+        // Truy vấn phí quản lý & ban quản trị
         $feeQuery = DB::table('apartments as a')
             ->join('buildings as b', 'a.building_id', '=', 'b.building_id');
 
-        // Apply building filter for feeQuery based on user role
         if ($user->role !== 'admin') {
             $feeQuery->whereIn('b.building_id', $assignedBuildings);
         } else {
@@ -81,24 +77,22 @@ class DebtController extends Controller
         }
 
         $feeQuery = $feeQuery->selectRaw('
-            SUM(a.area) as total_area,
-            AVG(b.management_fee_per_m2) as management_fee_per_m2,
-            AVG(b.management_board_fee_per_m2) as management_board_fee_per_m2
-        ')->first();
+        SUM(a.area) as total_area,
+        AVG(b.management_fee_per_m2) as management_fee_per_m2,
+        AVG(b.management_board_fee_per_m2) as management_board_fee_per_m2
+    ')->first();
 
-        // Calculate total management fee
         $totalManagementFee = $feeQuery->total_area * $feeQuery->management_fee_per_m2;
         $managementDescription = 'Tổng diện tích ' . number_format($feeQuery->total_area, 2, ',', '.') . 'm², phí ' . number_format($feeQuery->management_fee_per_m2, 0, ',', '.') . 'đ/m²';
 
-        // Calculate total management board fee
-        $totalManagementBoardFee = $feeQuery->management_board_fee_per_m2 
-            ? $feeQuery->total_area * $feeQuery->management_board_fee_per_m2 
+        $totalManagementBoardFee = $feeQuery->management_board_fee_per_m2
+            ? $feeQuery->total_area * $feeQuery->management_board_fee_per_m2
             : 0;
         $managementBoardDescription = $feeQuery->management_board_fee_per_m2
             ? 'Tổng diện tích ' . number_format($feeQuery->total_area, 2, ',', '.') . 'm², thù lao ' . number_format($feeQuery->management_board_fee_per_m2, 0, ',', '.') . 'đ/m²'
             : 'Không có phí thù lao';
 
-        // Query for vehicle counts and parking fees
+        // Truy vấn phí gửi xe
         $parkingFeesQuery = DB::table('vehicles as v')
             ->join('vehicle_types as vt', 'v.vehicle_type_id', '=', 'vt.vehicle_type_id')
             ->join('apartments as a', 'v.apartment_id', '=', 'a.apartment_id')
@@ -107,7 +101,6 @@ class DebtController extends Controller
                     ->on('bvf.building_id', '=', 'a.building_id');
             });
 
-        // Apply building filter for parkingFees based on user role
         if ($user->role !== 'admin') {
             $parkingFeesQuery->whereIn('a.building_id', $assignedBuildings);
         } else {
@@ -118,13 +111,12 @@ class DebtController extends Controller
 
         $parkingFees = $parkingFeesQuery->groupBy('vt.vehicle_type_name', 'bvf.parking_fee')
             ->selectRaw('
-                vt.vehicle_type_name,
-                COUNT(v.vehicle_id) as vehicle_count,
-                bvf.parking_fee as parking_fee_per_vehicle
-            ')
+            vt.vehicle_type_name,
+            COUNT(v.vehicle_id) as vehicle_count,
+            bvf.parking_fee as parking_fee_per_vehicle
+        ')
             ->get();
 
-        // Calculate parking fees for each vehicle type
         $carParkingFee = 0;
         $motorbikeParkingFee = 0;
         $bicycleParkingFee = 0;
@@ -137,18 +129,16 @@ class DebtController extends Controller
             if ($fee->vehicle_type_name === 'Ô tô' && $fee->vehicle_count > 0) {
                 $firstCarFee = $fee->parking_fee_per_vehicle;
                 $additionalCarFee = $firstCarFee * 1.2;
-                if ($fee->vehicle_count == 1) {
-                    $amount = $firstCarFee;
-                } else {
-                    $amount = $firstCarFee + ($fee->vehicle_count - 1) * $additionalCarFee;
-                }
+                $amount = $fee->vehicle_count == 1
+                    ? $firstCarFee
+                    : $firstCarFee + ($fee->vehicle_count - 1) * $additionalCarFee;
                 $carParkingFee += $amount;
                 $carDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} (1 x " . number_format($firstCarFee, 0, ',', '.') . "đ, " . ($fee->vehicle_count - 1) . " x " . number_format($additionalCarFee, 0, ',', '.') . "đ)";
-            } elseif ($fee->vehicle_type_name === 'Xe máy - xe máy điện' && $fee->vehicle_count > 0) {
+            } elseif ($fee->vehicle_type_name === 'Xe máy - xe máy điện') {
                 $amount = $fee->vehicle_count * $fee->parking_fee_per_vehicle;
                 $motorbikeParkingFee += $amount;
                 $motorbikeDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} x " . number_format($fee->parking_fee_per_vehicle, 0, ',', '.') . "đ";
-            } elseif ($fee->vehicle_type_name === 'Xe đạp - xe đạp điện' && $fee->vehicle_count > 0) {
+            } elseif ($fee->vehicle_type_name === 'Xe đạp - xe đạp điện') {
                 $amount = $fee->vehicle_count * $fee->parking_fee_per_vehicle;
                 $bicycleParkingFee += $amount;
                 $bicycleDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} x " . number_format($fee->parking_fee_per_vehicle, 0, ',', '.') . "đ";
@@ -156,15 +146,14 @@ class DebtController extends Controller
         }
 
         $totalParkingFee = $carParkingFee + $motorbikeParkingFee + $bicycleParkingFee;
-        $carDescription = !empty($carDescriptionParts) ? implode(', ', $carDescriptionParts) : 'Không có ô tô';
-        $motorbikeDescription = !empty($motorbikeDescriptionParts) ? implode(', ', $motorbikeDescriptionParts) : 'Không có xe máy';
-        $bicycleDescription = !empty($bicycleDescriptionParts) ? implode(', ', $bicycleDescriptionParts) : 'Không có xe đạp';
+        $carDescription = $carDescriptionParts ? implode(', ', $carDescriptionParts) : 'Không có ô tô';
+        $motorbikeDescription = $motorbikeDescriptionParts ? implode(', ', $motorbikeDescriptionParts) : 'Không có xe máy';
+        $bicycleDescription = $bicycleDescriptionParts ? implode(', ', $bicycleDescriptionParts) : 'Không có xe đạp';
 
-        // Query for paginated invoices (remaining_balance > 0)
-        $query = (clone $baseQuery);
-        $paginatedInvoices = $query->paginate($perPage);
+        // Phân trang hóa đơn
+        $paginatedInvoices = (clone $baseQuery)->paginate($perPage);
 
-        // Process invoice list
+        // Duyệt danh sách hóa đơn trong trang hiện tại
         $invoices = collect($paginatedInvoices->items())->map(function ($invoice) {
             return [
                 'invoice_id' => $invoice->invoice_id,
@@ -179,11 +168,22 @@ class DebtController extends Controller
             ];
         });
 
-        // Calculate total and overdue debt
-        $totalDebt = $invoices->sum('remaining_balance');
-        $overdueDebt = $invoices->where('is_overdue', true)->sum('remaining_balance');
+        // Tính nợ toàn bộ, không dựa theo trang
+        $totalDebt = (clone $baseQuery)->sum('remaining_balance');
+        $overdueDebt = (clone $baseQuery)
+            ->where('due_date', '<', now())
+            ->where('remaining_balance', '>', 0)
+            ->sum('remaining_balance');
+            
+        $allInvoices = (clone $baseQuery)->get();
 
-        // Prepare response
+        // Đếm số lượng hóa đơn theo trạng thái
+        $unpaidCount = $allInvoices->where('status', 0)->count();           
+        $paidCount = $allInvoices->where('status', 1)->count();             
+        $partiallyPaidCount = $allInvoices->where('status', 2)->count();    
+        $overdueCount = $allInvoices->where('status', 3)->count();         
+
+        // Trả về JSON
         return response()->json([
             'message' => 'Debts retrieved successfully',
             'data' => [
@@ -192,6 +192,10 @@ class DebtController extends Controller
                 'overdue_debt' => $overdueDebt,
                 'total_issued_amount' => $totals->total_issued_amount ?? 0,
                 'total_paid_amount' => $totals->total_paid_amount ?? 0,
+                'unpaid_count' => $unpaidCount,
+                'paid_count' => $paidCount,
+                'partially_paid_count' => $partiallyPaidCount,
+                'overdue_count' => $overdueCount,
                 'total_fees' => [
                     [
                         'type' => 'Phí quản lý vận hành',
