@@ -13,6 +13,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('invoices:update-status')->dailyAt('00:00');
+        $schedule->command('invoices:create-monthly')->monthlyOn(1, '00:00');
+        // $schedule->command('invoices:create-monthly-invoices')->everyMinute();
     }
 
     /**
