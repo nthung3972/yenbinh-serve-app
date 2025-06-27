@@ -45,7 +45,7 @@ class InvoiceRepository
 
     public function create(array $request)
     {
-        $user = auth()->user();
+        $user = auth()->user() ?? \App\Models\User::find(1);
         $invoice = Invoice::create([
             'building_id' => $request['building_id'],
             'apartment_id' => $request['apartment_id'],
