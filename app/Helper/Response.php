@@ -33,8 +33,12 @@ class Response
      */
     public static function dataError($code = 422, $data = [], $message = 'Error')
     {
-        // Đảm bảo $code luôn là một số nguyên
-        $code = is_numeric($code) ? (int)$code : 422;
+        // Đảm bảo $code là HTTP status hợp lệ
+        if (!is_numeric($code) || $code < 100 || $code > 599) {
+            $code = 422; // fallback an toàn
+        } else {
+            $code = (int) $code;
+        }
 
         $dataFormat = [
             'success' => false,

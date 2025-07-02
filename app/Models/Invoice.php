@@ -21,7 +21,9 @@ class Invoice extends Model
         'updated_by',
         'payment_method',
         'total_paid',
-        'remaining_balance'
+        'remaining_balance',
+        'previous_balance',
+        'monthly_fee'
     ];
 
     public function invoiceDetails()

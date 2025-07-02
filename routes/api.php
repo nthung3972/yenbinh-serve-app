@@ -113,6 +113,7 @@ Route::group(['prefix' => 'admin'], function () {
         //payment
         Route::group(['prefix' => 'payment'], function () {
             Route::post('/create', [PaymentController::class, 'create']);
+            Route::post('/mass-payment', [PaymentController::class, 'massPayment']);
         });
 
         //debt
