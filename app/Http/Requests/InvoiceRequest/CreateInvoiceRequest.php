@@ -27,12 +27,12 @@ class CreateInvoiceRequest extends FormRequest
             'apartment_id' => 'required|exists:apartments,apartment_id',
             'invoice_date' => 'required|date',
             'due_date' => 'required|date|after:invoice_date',
-            'total_amount' => 'required|numeric',
+            'total_amount' => 'required',
             'fees' => 'required|array',
             'fees.*.fee_type_id' => 'required|exists:fee_types,fee_type_id',
-            'fees.*.amount' => 'required|numeric|min:0',
-            'fees.*.quantity' => 'nullable|numeric|min:0',
-            'fees.*.price' => 'nullable|numeric|min:0',
+            'fees.*.amount' => 'required',
+            'fees.*.quantity' => 'nullable',
+            'fees.*.price' => 'nullable',
             'fees.*.description' => 'string|required'
         ];
     }

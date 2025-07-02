@@ -13,7 +13,7 @@ class InvoiceRepository
 {
     public function getInvoicesByBuilding($building_id, $perPage = '', $keyword = null, $status = null, $invoice_date_from = null, $invoice_date_to = null)
     {
-        $query = Invoice::with(['updatedBy', 'apartment']) // Load thông tin liên quan
+        $query = Invoice::with(['updatedBy', 'apartment'])
             ->where('building_id', $building_id)
             ->orderBy('invoice_date', 'desc');
 
@@ -46,31 +46,88 @@ class InvoiceRepository
     public function create(array $request)
     {
         $user = auth()->user() ?? \App\Models\User::find(1);
+
+        // Hóa đơn gần nhất của căn hộ
+        $latestInvoice = Invoice::where('apartment_id', $request['apartment_id'])
+            ->orderBy('invoice_date', 'desc')
+            ->first();
+
+        $monthlyFee = $request['monthly_amount'];
+        $previousBalance = 0;
+        $totalPaid = 0;
+        $status = 0; // 0: chưa thanh toán
+
+        if ($latestInvoice) {
+            $prevRemaining = $latestInvoice->remaining_balance;
+
+            if ($prevRemaining < 0) {
+                // Có tiền dư từ tháng trước
+                $surplus = abs($prevRemaining);
+                $previousBalance = -$surplus;
+
+                if ($surplus >= $monthlyFee) {
+                    // Dư đủ để thanh toán toàn bộ hóa đơn mới
+                    $status = 1; // Đã thanh toán
+                    $totalPaid = $monthlyFee;
+                    $previousBalance = -$surplus;
+                    $totalAmount = $monthlyFee + $previousBalance;
+                    $remainingBalance = $totalAmount;
+                } else {
+                    // Dư không đủ
+                    $status = 3; // Thanh toán một phần
+                    $totalPaid = $surplus;
+                    $previousBalance = -$surplus;
+                    $totalAmount = $monthlyFee + $previousBalance;
+                    $remainingBalance = $monthlyFee - $totalPaid;
+                }
+            } elseif ($prevRemaining > 0) {
+                // Còn nợ từ tháng trước
+                $previousBalance = $prevRemaining;
+                $status = 0; // chưa thanh toán
+                $totalAmount = $monthlyFee + $previousBalance;
+                $remainingBalance = $totalAmount - $totalPaid;
+
+            }
+        }
+
+        // dd([
+        //     'monthly_fee' => $monthlyFee,
+        //     'previous_balance' => $previousBalance,
+        //     'total_amount' => $totalAmount,
+        //     'total_paid' => $totalPaid,
+        //     'remaining_balance' => $remainingBalance,
+        //     'status' => $status
+        // ]);
+
+        // Tạo hóa đơn
         $invoice = Invoice::create([
             'building_id' => $request['building_id'],
             'apartment_id' => $request['apartment_id'],
             'invoice_date' => $request['invoice_date'],
             'due_date' => $request['due_date'],
-            'total_amount' => $request['total_amount'],
-            'remaining_balance' => $request['total_amount'],
-            'status' => 0,
+            'total_amount' => $totalAmount,
+            'monthly_fee' => $monthlyFee,
+            'remaining_balance' => $remainingBalance,
+            'previous_balance' => $previousBalance,
+            'total_paid' => $totalPaid,
+            'status' => $status,
             'updated_by' => $user->id
         ]);
 
-        $invoiceId = $invoice->invoice_id;
-
+        // Tạo chi tiết hóa đơn
         if ($invoice && $invoice->invoice_id) {
             foreach ($request['fees'] as $invoiceDetail) {
                 InvoiceDetail::create([
-                    'invoice_id' => $invoiceId,
+                    'invoice_id' => $invoice->invoice_id,
                     'fee_type_id' => $invoiceDetail['fee_type_id'],
                     'quantity' => $invoiceDetail['quantity'] ?? null,
-                    'price' =>  $invoiceDetail['price'] ?? null,
+                    'price' => $invoiceDetail['price'] ?? null,
                     'amount' => $invoiceDetail['amount'],
                     'description' => $invoiceDetail['description']
                 ]);
             }
         }
+
         return $invoice;
     }
 
@@ -138,7 +195,8 @@ class InvoiceRepository
         return $invoice;
     }
 
-    public function existingInvoice(array $request, $year, $month) {
+    public function existingInvoice(array $request, $year, $month)
+    {
         $existingInvoice = Invoice::where('apartment_id', $request['apartment_id'])
             ->whereYear('invoice_date', $year)
             ->whereMonth('invoice_date', $month)
@@ -156,7 +214,7 @@ class InvoiceRepository
         }
 
         if ($invoice->status == 1) {
-            throw new \Exception('Hóa đơn đã thanh toán không thể xóa!', 422 );
+            throw new \Exception('Hóa đơn đã thanh toán không thể xóa!', 422);
         }
 
         $invoiceDetails = InvoiceDetail::where('invoice_id', $id)->get();
