@@ -31,9 +31,19 @@ class CreateApartmentRequest extends FormRequest
             'building_id' => 'required|exists:buildings,building_id',
             'area' => 'required',
             'floor_number' => 'required',
-            'ownership_type' => 'nullable|string|in:own,lease,lease_back,mortgage,shared_ownership',
-            'apartment_type' => 'nullable|string|in:studio,1bedroom,2bedroom,3bedroom,penthouse,duplex,dualkey',
+            'apartment_type' => 'required',
             'notes' => 'nullable|string|max:255',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'apartment_number.required' => 'Vui lòng điền số căn hộ.',
+            'area.required' => 'Vui lòng điền diện tích căn hộ.',
+            'floor_number.required' => 'Vui lòng điền số tầng.',
+            'apartment_type.required' => 'Vui lòng chọn loại căn hộ.',
+            'apartment_number.unique' => 'Số căn hộ đã tồn tại.'
         ];
     }
 }

@@ -14,9 +14,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StaffReportRequest\CreateDailyReport;
 use App\Http\Requests\StaffReportRequest\UpdateDailyReport;
+use App\Services\ApiAdmin\ShiftService;
+use App\Helper\Response;
+use App\Http\Requests\ShiftRequest\CreateShiftRequest;
 
 class DailyReportController extends Controller
 {
+    public function __construct(
+        public ShiftService $shiftService,
+    ) {}
+
     public function getFormInfo($building_id)
     {
         $user = Auth::user();

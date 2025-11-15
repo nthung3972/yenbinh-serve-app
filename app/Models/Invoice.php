@@ -13,17 +13,17 @@ class Invoice extends Model
 
     protected $fillable = [
         'building_id',
+        'invoice_number',
+        'building_id',
         'apartment_id',
-        'invoice_date',
+        'period',
+        'issue_date',
         'due_date',
-        'total_amount',
         'status',
-        'updated_by',
-        'payment_method',
-        'total_paid',
-        'remaining_balance',
-        'previous_balance',
-        'monthly_fee'
+        'total_amount',
+        'paid_amount',
+        'opening_balance',
+        'closing_balance'
     ];
 
     public function invoiceDetails()

@@ -10,17 +10,17 @@ class InvoiceDetail extends Model
     use HasFactory;
 
     protected $primaryKey = 'invoice_detail_id';
-
-    protected $appends = ['fee_name'];
+    protected $appends = ['fee_subtype_name'];
 
     protected $fillable = [
         'invoice_id',
-        'amount',
-        'quantity',
-        'price',
-        'amount',
+        'fee_types_id',
+        'fee_subtypes_id',
+        'building_fee_id',
         'description',
-        'fee_type_id'
+        'quantity',
+        'unit_price',
+        'amount'
     ];
 
     public function invoice()
@@ -30,11 +30,16 @@ class InvoiceDetail extends Model
 
     public function feeTypes()
     {
-        return $this->belongsTo(FeeType::class, 'fee_type_id', 'fee_type_id');
+        return $this->belongsTo(FeeType::class, 'fee_types_id', 'fee_types_id');
     }
 
-    public function getFeeNameAttribute()
+    public function feeSubtypes()
     {
-        return $this->feeTypes->fee_name ?? null;
+        return $this->belongsTo(FeeSubtype::class, 'fee_subtypes_id', 'fee_subtypes_id');
+    }
+
+    public function getFeeSubtypeNameAttribute()
+    {
+        return $this->feeSubtypes->name ?? null;
     }
 }

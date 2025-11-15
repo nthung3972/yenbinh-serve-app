@@ -8,10 +8,13 @@ use App\Models\Resident;
 use App\Services\ApiAdmin\ApartmentService;
 use App\Services\ApiAdmin\BuildingService;
 use App\Helper\Response;
+use Exception;
 use Illuminate\Http\Request;
 use App\Http\Requests\ApartmentRequest\CreateApartmentRequest;
 use App\Http\Requests\ApartmentRequest\UpdateApartmentStatusRequest;
 use App\Models\Apartment;
+use App\Models\ApartmentBalance;
+use App\Models\Invoice;
 use Illuminate\Support\Carbon;
 
 class ApartmentController extends Controller
@@ -49,7 +52,8 @@ class ApartmentController extends Controller
         }
     }
 
-    public function edit($id) {
+    public function edit($id)
+    {
         try {
             $apartment = $this->apartmentService->getApartmentDetail($id);
             return Response::data($apartment);
@@ -68,7 +72,7 @@ class ApartmentController extends Controller
         }
     }
 
-    public function getApartmentCode($id) 
+    public function getApartmentCode($id)
     {
         try {
             $apartments =  Apartment::select('apartment_id', 'apartment_number')->where('building_id', $id)->get();
@@ -90,6 +94,43 @@ class ApartmentController extends Controller
             });
             return Response::data(['data' => $residents]);
         } catch (\Throwable $th) {
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function apartmentBalance(Request $request, $id)
+    {
+        try {
+            $apartmentBalance = ApartmentBalance::where('apartment_id', $id)->first();
+
+            $perPage = $request->get('per_page', 10);
+
+            $transactions = $apartmentBalance->transactions()
+            ->with('createdBy:id,name,email')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+            return Response::data([
+                'apartmentBalance' => $apartmentBalance,
+                'apartmentTransactions' => $transactions
+            ]);
+        } catch (\Throwable $th) {
+            dd($th);
+            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+        }
+    }
+
+    public function apartmentInvoice(Request $request, $id)
+    {
+         try {
+            $perPage = $request->get('per_page', 10);
+            $invoices = Invoice::where('apartment_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+            
+            return Response::data(['data' => $invoices]);
+        } catch (\Throwable $th) {
+            dd($th);
             return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
         }
     }

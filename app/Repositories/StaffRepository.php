@@ -18,7 +18,7 @@ class StaffRepository
 
         // dd($query->toSql(), $query->getBindings());
         if (!empty($keyword)) {
-            $query->where('buildings.name', 'LIKE', "%$keyword%");
+            $query->where('users.name', 'LIKE', "%$keyword%");
         }
 
         $query->orderBy('created_at', 'desc');

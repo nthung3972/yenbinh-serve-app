@@ -8,10 +8,10 @@ use Carbon\Carbon;
 
 class VehicleRepository
 {
-    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type = null, $status = null)
+    public function getListVehicle($building_id, $perPage = '', $keyword = null, $vehicle_type_id = null, $status = null)
     {
-        $query = Vehicle::with('updatedBy', 'vehicleType')->select('vehicles.*', 'apartments.apartment_number')
-        ->join('apartments', 'vehicles.apartment_id', '=', 'apartments.apartment_id')
+        $query = Vehicle::with('updatedBy', 'vehicleType')->select('vehicles.*')
+        ->join('apartments', 'vehicles.apartment_number', '=', 'apartments.apartment_number')
         ->where('vehicles.building_id', $building_id);
 
         if (!empty($keyword)) {
@@ -21,8 +21,8 @@ class VehicleRepository
             });
         }
 
-        if (!empty($vehicle_type)) {
-            $query->where('vehicle_type', 'LIKE', "%$vehicle_type%");
+        if (!empty($vehicle_type_id)) {
+            $query->where('vehicle_type_id',  $vehicle_type_id);
         }
 
         if (!is_null($status)) {
@@ -32,7 +32,7 @@ class VehicleRepository
         $query->orderBy('created_at', 'desc');
         // dd($query->toSql(), $query->getBindings());
 
-        $vehicles = $query->with('apartment')
+        $vehicles = $query
             ->paginate($perPage);
 
         return $vehicles;
@@ -60,25 +60,25 @@ class VehicleRepository
 
         foreach($request as $vehicle) {
             Vehicle::create([
-                'license_plate' => $vehicle['license_plate'],
                 'vehicle_type_id' => $vehicle['vehicle_type_id'],
+                'building_id' => $vehicle['building_id'],
+                'apartment_number' => $vehicle['apartment_number'],
+                'resident_id' => $vehicle['resident_id'],
+                'license_plate' => $vehicle['license_plate'],
                 'parking_slot' => $vehicle['parking_slot'],
                 'vehicle_company' => $vehicle['vehicle_company'],
                 'vehicle_model' => $vehicle['vehicle_model'],
                 'vehicle_color' => $vehicle['vehicle_color'],
                 'status' => $vehicle['status'],
-                'building_id' => $vehicle['building_id'],
-                'resident_id' => $vehicle['resident_id'],
-                'apartment_id' => $vehicle['apartment_id'],
-                'created_at' => $vehicle['created_at'],
                 'updated_by' => $user->id,
+                'note' => $vehicle['note'],
             ]);
         }
     }
 
     public function edit(int $id)
     {
-        $vehicle = Vehicle::with('apartment', 'resident')->where('vehicle_id', $id)->first();
+        $vehicle = Vehicle::with('vehicleType', 'resident')->where('vehicle_id', $id)->first();
         return $vehicle;
     }
 
@@ -100,8 +100,8 @@ class VehicleRepository
             'parking_slot' => $request['parking_slot'],
             'status' => $request['status'],
             'building_id' => $request['building_id'],
-            'apartment_id' => $request['apartment_id'],
-            'created_at' => $request['created_at'],
+            'apartment_number' => $request['apartment_number'],
+            'resident_id' => $request['resident_id'],
             'updated_by' => $user->id,
             'inactive_date' => $inactive_date,
         ]);

@@ -40,7 +40,9 @@ class VehicleController extends Controller
     {
         $filteredVehicles = [];
         foreach ($request->all() as $vehicle) {
-            $filteredVehicles[] = collect($vehicle)->only(['building_id', 'apartment_number', 'license_plate', 'vehicle_type_id', 'parking_slot', 'created_at', 'status', 'resident_id', 'vehicle_company', 'vehicle_model', 'vehicle_color'])->toArray();
+            $filteredVehicles[] = collect($vehicle)->only([
+                'vehicle_type_id', 'building_id', 'apartment_number', 'resident_id', 'license_plate', 'parking_slot', 'vehicle_company', 'vehicle_model', 'vehicle_color', 'status', 'note'
+            ])->toArray();
         }
 
         try {
@@ -67,7 +69,7 @@ class VehicleController extends Controller
     {
         try {
             $vehicle = $this->vehicleService
-            ->update($request->only('building_id', 'apartment_number', 'license_plate', 'vehicle_type_id', 'vehicle_company', 'vehicle_model', 'vehicle_color', 'parking_slot', 'created_at', 'status'), $id);
+            ->update($request->only('building_id', 'resident_id', 'apartment_number', 'license_plate', 'vehicle_type_id', 'vehicle_company', 'vehicle_model', 'vehicle_color', 'parking_slot', 'status'), $id);
             return Response::data(['data' => $vehicle]);
         } catch (ValidationException $e) {
             return Response::dataError($e->getCode(), $e->getErrors(), "Lỗi xác thực dữ liệu");
