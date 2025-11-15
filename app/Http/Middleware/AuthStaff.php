@@ -21,7 +21,10 @@ class AuthStaff
         }
     
         if (Auth::user()->role !== 'staff') {
-            return response()->json(['error' => 'Forbidden - Staff Only'], 403);
+            return response()->json([
+                'error' => 'Forbidden - Staff Only',
+                'code' => 403
+            ], 403);
         }
     
         return $next($request);

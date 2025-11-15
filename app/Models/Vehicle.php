@@ -14,28 +14,28 @@ class Vehicle extends Model
 
     protected $primaryKey = 'vehicle_id';
 
-    protected $appends = ['apartment_number', 'full_name'];
+    protected $appends = ['full_name'];
 
     protected $fillable = [
-        'license_plate',
-        'vehicle_type',
-        'parking_slot',
-        'status',
-        'apartment_id',
-        'resident_id',
+        'vehicle_type_id',
         'building_id',
-        'updated_by',
-        'inactive_date',
+        'apartment_number',
+        'resident_id',
+        'license_plate',
+        'parking_slot',
         'vehicle_company',
         'vehicle_model',
         'vehicle_color',
-        'vehicle_type_id'
+        'inactive_date',
+        'status',
+        'updated_by',
+        'note',
     ];
 
-    public function apartment()
-    {
-        return $this->belongsTo(Apartment::class, 'apartment_id', 'apartment_id');
-    }
+    // public function apartment()
+    // {
+    //     return $this->belongsTo(Apartment::class, 'apartment_id', 'apartment_id');
+    // }
 
     public function resident()
     {
@@ -52,10 +52,10 @@ class Vehicle extends Model
         return $this->resident->full_name ?? null;
     }
 
-    public function getApartmentNumberAttribute()
-    {
-        return $this->apartment->apartment_number ?? null;
-    }
+    // public function getApartmentNumberAttribute()
+    // {
+    //     return $this->apartment->apartment_number ?? null;
+    // }
 
     public function getCreatedAtAttribute($value)
     {

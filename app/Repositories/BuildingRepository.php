@@ -92,22 +92,22 @@ class BuildingRepository
 
         // Tổng số hóa đơn của tháng hiện tại & tháng trước
         $totalInvoicesCurrent = Invoice::where('building_id', $building_id)
-            ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
+            ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$currentMonth])
             ->count();
 
         $totalInvoicesLast = Invoice::where('building_id', $building_id)
-            ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
+            ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$lastMonth])
             ->count();
 
         // Số hóa đơn đã thanh toán của tháng hiện tại & tháng trước
         $paidInvoicesCurrent = Invoice::where('building_id', $building_id)
             ->where('status', 1)
-            ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
+            ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$currentMonth])
             ->count();
 
         $paidInvoicesLast = Invoice::where('building_id', $building_id)
             ->where('status', 1)
-            ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
+            ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$lastMonth])
             ->count();
 
         // Tính tỷ lệ thu phí của tháng hiện tại & tháng trước
@@ -228,21 +228,21 @@ class BuildingRepository
         // Tính toán số liệu
         $buildings->transform(function ($building) use ($currentMonth, $lastMonth) {
             $totalInvoicesCurrent = Invoice::where('building_id', $building->building_id)
-                ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
+                ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$currentMonth])
                 ->count();
 
             $totalInvoicesLast = Invoice::where('building_id', $building->building_id)
-                ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
+                ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$lastMonth])
                 ->count();
 
             $paidInvoicesCurrent = Invoice::where('building_id', $building->building_id)
                 ->where('status', 1)
-                ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$currentMonth])
+                ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$currentMonth])
                 ->count();
 
             $paidInvoicesLast = Invoice::where('building_id', $building->building_id)
                 ->where('status', 1)
-                ->whereRaw("DATE_FORMAT(invoice_date, '%Y-%m') = ?", [$lastMonth])
+                ->whereRaw("DATE_FORMAT(period, '%Y-%m') = ?", [$lastMonth])
                 ->count();
 
             // Tính tỷ lệ thu phí

@@ -21,7 +21,7 @@ class VehicleService
             $id,
             $request->per_page ?? config('constant.paginate'),
             $request->keyword,
-            $request->vehicle_type,
+            $request->vehicle_type_id,
             $request->status
         );
     }

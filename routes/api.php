@@ -19,6 +19,10 @@ use App\Http\Controllers\ApiAdmin\VehicleTypeController;
 use App\Http\Controllers\ApiAdmin\PaymentController;
 use App\Http\Controllers\ApiAdmin\DebtController;
 use App\Http\Controllers\ApiAdmin\BuildingPersonnelController;
+use App\Http\Controllers\ApiAdmin\ShiftController;
+use App\Http\Controllers\ApiAdmin\FeeSubtypeController;
+use App\Http\Controllers\ApiAdmin\BuildingFeeController;
+use App\Http\Controllers\ApiAdmin\UtilityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +34,9 @@ use App\Http\Controllers\ApiAdmin\BuildingPersonnelController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
 Route::group(['prefix' => 'admin'], function () {
     Route::group(['prefix' => 'auth'], function () {
-        Route::get('/check', function () {
-            return "Database connected!";
-        });
         Route::post('login', [AuthController::class, 'login']);
         Route::get('/verify/{token}', [AuthController::class, 'verify']);
         Route::post('/forgot-password', [PasswordChangeController::class, 'forgotPassword']);
@@ -83,6 +85,9 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/apartment/{id}/update', [ApartmentController::class, 'update']);
             Route::get('/apartment-numbers/{id}', [ApartmentController::class, 'getApartmentCode']);
             Route::get('/apartment-number/{code}/residents', [ApartmentController::class, 'getResidentsByApartment']);
+
+            Route::get('/balance/{id}', [ApartmentController::class, 'apartmentBalance']);
+            Route::get('/invoice/{id}', [ApartmentController::class, 'apartmentInvoice']);
         });
 
         //resident
@@ -103,17 +108,15 @@ Route::group(['prefix' => 'admin'], function () {
         //invoice
         Route::group(['prefix' => 'invoice'], function () {
             Route::get('/list-by-building/{id}', [InvoiceController::class, 'getListInvoice']);
-            Route::get('/apartment-fees/{id}', [InvoiceController::class, 'getApartmentFees']);
-            Route::post('/create', [InvoiceController::class, 'create']);
             Route::get('/edit/{id}', [InvoiceController::class, 'show']);
-            Route::post('/update/{id}', [InvoiceController::class, 'update']);
-            Route::delete('/delete/{id}', [InvoiceController::class, 'destroy']);
+            Route::delete('/delete', [InvoiceController::class, 'destroy']);
+            Route::post('/generate', [InvoiceController::class, 'generateMonthlyInvoices']);
         });
 
         //payment
         Route::group(['prefix' => 'payment'], function () {
             Route::post('/create', [PaymentController::class, 'create']);
-            Route::post('/mass-payment', [PaymentController::class, 'massPayment']);
+            Route::get('/history-by-apartment/{id}', [PaymentController::class, 'history']);
         });
 
         //debt
@@ -122,7 +125,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/history', [DebtController::class, 'getDebtHistory']);
             Route::get('/periods', [DebtController::class, 'getPeriods']);
         });
-        
+
         //vehicle
         Route::group(['prefix' => 'vehicle'], function () {
             Route::get('/list-by-building/{id}', [VehicleController::class, 'getListVehicle']);
@@ -151,6 +154,21 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/invoices/{id}', [ExportController::class, 'exportPrintable']);
             Route::post('/invoices/export', [ExportController::class, 'exportInvoices']);
         });
+
+        //fee_building
+        Route::group(['prefix' => 'building-fee'], function () {
+            Route::get('/fees-by-building/{id}', [BuildingFeeController::class, 'feesByBuilding']);
+            Route::get('/fee/{id}', [BuildingFeeController::class, 'show']);
+            Route::get('/fee-management-by-building/{id}', [BuildingFeeController::class, 'feeManagementByBuilding']);
+        });
+
+         //utilities
+        Route::prefix('utilities')->group(function () {
+            Route::get('/by-building/{id}', [UtilityController::class, 'index']);
+            Route::post('import', [UtilityController::class, 'importFromExcel']);
+            Route::post('calculate-and-bill', [UtilityController::class, 'calculateAndBill']);
+            Route::get('template', [UtilityController::class, 'downloadTemplate']);
+        });
     });
 
     Route::group(['middleware' => 'auth_admin', 'cors'], function () {
@@ -176,8 +194,39 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/daily-reports', [DailyReportController::class, 'getAllReports']);
             Route::get('/daily-report/{id}', [DailyReportController::class, 'getDailyReportDetail']);
             Route::delete('/delete-daily-report/{id}', [DailyReportController::class, 'deleteDailyReport']);
+            Route::post('/create-shift', [DailyReportController::class, 'createShift']);
+        });
+
+        //shift
+        Route::group(['prefix' => 'shift'], function () {
+            Route::get('/shifts', [ShiftController::class, 'getShifts']);
+            Route::post('/create', [ShiftController::class, 'createShift']);
+            Route::get('/shift/{id}', [ShiftController::class, 'getShiftById']);
+            Route::put('/update/{id}', [ShiftController::class, 'updateShift']);
+        });
+
+        //fee_type
+        Route::group(['prefix' => 'fees'], function () {
+            Route::get('/types', [FeeTypeController::class, 'index']);
+            Route::post('/types', [FeeTypeController::class, 'store']);
+            Route::put('/types/{id}', [FeeTypeController::class, 'update']);
+            Route::get('/code', [FeeTypeController::class, 'getFeeTypeCode']);
+        });
+
+        //fee_subtype
+        Route::group(['prefix' => 'fees'], function () {
+            Route::post('/subtypes', [FeeSubtypeController::class, 'store']);
+            Route::put('/subtypes/{id}', [FeeSubtypeController::class, 'update']);
+            Route::get('/subtypes/{id}', [FeeSubtypeController::class, 'getByFeeTypeId']);
+        });
+
+        //fee_building (admin)
+        Route::group(['prefix' => 'building-fee'], function () {
+            Route::post('/fee', [BuildingFeeController::class, 'store']);
+            Route::put('/fee/{id}', [BuildingFeeController::class, 'update']);
         });
     });
+
 
     Route::group(['middleware' => 'auth_staff', 'cors'], function () {
         //report

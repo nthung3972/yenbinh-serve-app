@@ -29,4 +29,14 @@ class CreatePaymentRequest extends FormRequest
             'note' => 'nullable|string',
         ];
     }
+
+    public function messages()
+    {
+        return [
+            'amount.required' => 'Vui lòng điền số tiền thanh toán.',
+            'amount.min' => 'Số tiền thanh toán phải lớn hơn 0.',
+            'payment_date.required' => 'Vui chọn ngày thành toán.',
+            'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
+        ];
+    }
 }

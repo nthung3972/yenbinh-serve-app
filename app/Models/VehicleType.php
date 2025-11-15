@@ -12,7 +12,10 @@ class VehicleType extends Model
     protected $primaryKey = 'vehicle_type_id';
 
     protected $fillable = [
-        'vehicle_type_name'
+        'fee_subtypes_id',
+        'code',
+        'name',
+        'description'
     ];
 
     public function buildingVehicleFees()

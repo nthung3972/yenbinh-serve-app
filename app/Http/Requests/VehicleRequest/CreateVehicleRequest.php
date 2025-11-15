@@ -22,18 +22,27 @@ class CreateVehicleRequest extends FormRequest
     public function rules(): array
     {
         return [
+            '*.vehicle_type_id' => 'required|exists:vehicle_types,vehicle_type_id',
             '*.building_id' => 'required|exists:buildings,building_id',
             '*.resident_id' => 'required|exists:residents,resident_id',
-            '*.apartment_number' => 'required',
-            '*.license_plate' => 'nullable|unique:vehicles,license_plate',
-            '*.vehicle_type_id' => 'required|exists:vehicle_types,vehicle_type_id',
+            '*.apartment_number' => 'required|exists:apartments,apartment_number',
+            '*.license_plate' => 'required|string',
             '*.parking_slot' => 'nullable|string',
-            '*.created_at' => 'nullable|date',
-            '*.status' => 'nullable|integer|in:0,1',
             '*.vehicle_company' => 'nullable|string',
             '*.vehicle_model' => 'nullable|string',
             '*.vehicle_color' => 'nullable|string',
+            '*.status' => 'nullable|integer|in:0,1',
+            '*.note' => 'nullable|string',
+        ];
+    }
 
+    public function messages()
+    {
+        return [
+            '*.vehicle_type_id.required' => 'Vui lòng chọn loại xe.',
+            '*.resident_id.required' => 'Vui lòng chọn cư dân.',
+            '*.apartment_number.required' => 'Vui lòng chọn căn hộ.',
+            '*.license_plate.required' => 'Vui lòng nhập biển số xe.',
         ];
     }
 }

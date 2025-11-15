@@ -39,33 +39,33 @@ class CreateMonthlyInvoices extends Command
      */
     public function handle()
     {
-        $apartments = \App\Models\Apartment::all();
-        $invoiceDate = now()->startOfMonth()->toDateString();
-        $dueDate = now()->startOfMonth()->addDays(30)->toDateString();
+        // $apartments = \App\Models\Apartment::all();
+        // $invoiceDate = now()->startOfMonth()->toDateString();
+        // $dueDate = now()->startOfMonth()->addDays(30)->toDateString();
 
-        foreach ($apartments as $apartment) {
-            try {
-                $fees = $this->feeService->getFeesForApartment($apartment->apartment_id);
+        // foreach ($apartments as $apartment) {
+        //     try {
+        //         $fees = $this->feeService->getFeesForApartment($apartment->apartment_id);
 
-                $totalAmount = array_sum(array_column($fees, 'amount'));
+        //         $totalAmount = array_sum(array_column($fees, 'amount'));
 
-                $requestData = [
-                    'building_id' => $apartment->building_id,
-                    'apartment_id' => $apartment->apartment_id,
-                    'invoice_date' => $invoiceDate,
-                    'due_date' => $dueDate,
-                    'total_amount' => $totalAmount,
-                    'fees' => $fees
-                ];
+        //         $requestData = [
+        //             'building_id' => $apartment->building_id,
+        //             'apartment_id' => $apartment->apartment_id,
+        //             'invoice_date' => $invoiceDate,
+        //             'due_date' => $dueDate,
+        //             'total_amount' => $totalAmount,
+        //             'fees' => $fees
+        //         ];
                 
-                // $this->info("requestData: " . json_encode($requestData, JSON_PRETTY_PRINT));
+        //         // $this->info("requestData: " . json_encode($requestData, JSON_PRETTY_PRINT));
 
-                $this->invoiceService->create($requestData);
+        //         $this->invoiceService->create($requestData);
 
-                $this->info("Đã tạo hóa đơn cho căn hộ ID {$apartment->apartment_id}");
-            } catch (\Throwable $e) {
-                $this->error("Lỗi căn hộ ID {$apartment->apartment_id}: " . $e->getMessage());
-            }
-        }
+        //         $this->info("Đã tạo hóa đơn cho căn hộ ID {$apartment->apartment_id}");
+        //     } catch (\Throwable $e) {
+        //         $this->error("Lỗi căn hộ ID {$apartment->apartment_id}: " . $e->getMessage());
+        //     }
+        // }
     }
 }

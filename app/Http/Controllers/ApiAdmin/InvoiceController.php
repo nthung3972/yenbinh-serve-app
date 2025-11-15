@@ -6,17 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\ApiAdmin\InvoiceService;
 use App\Services\ApiAdmin\BuildingService;
+use App\Services\ApiAdmin\BalanceService;
 use App\Helper\Response;
-use App\Http\Requests\InvoiceRequest\CreateInvoiceRequest;
-use App\Http\Requests\InvoiceRequest\UpdateInvoiceRequest;
 use Illuminate\Support\Facades\DB;
-use App\Exceptions\ValidationException;
+use Carbon\Carbon;
 
 class InvoiceController extends Controller
 {
     public function __construct(
         public InvoiceService $invoiceService,
         public BuildingService $buildingService,
+        public BalanceService $balanceService
     ) {}
 
     public function getListInvoice(Request $request, $id)
@@ -37,149 +37,6 @@ class InvoiceController extends Controller
         }
     }
 
-    public function getApartmentFees($apartmentId)
-    {
-        // ======= LẤY THÔNG TIN CĂN HỘ VÀ TÒA NHÀ =======
-        $managementInfo = DB::table('apartments as a')
-            ->join('buildings as b', 'a.building_id', '=', 'b.building_id')
-            ->where('a.apartment_id', $apartmentId)
-            ->select('a.area', 'b.management_fee_per_m2', 'b.management_board_fee_per_m2')
-            ->first();
-
-        // ======= TÍNH PHÍ CỐ ĐỊNH =======
-
-        // Phí quản lý vận hành
-        $managementFeeAmount = $managementInfo->area * $managementInfo->management_fee_per_m2;
-        $managementDescription = 'Diện tích ' . $managementInfo->area . 'm², phí ' . number_format($managementInfo->management_fee_per_m2, 0, ',', '.') . 'đ/m²';
-
-        // Phí thù lao ban quản trị (nếu có)
-        $managementBoardFeeAmount = $managementInfo->management_board_fee_per_m2
-            ? $managementInfo->area * $managementInfo->management_board_fee_per_m2
-            : 0;
-        $managementBoardDescription = $managementInfo->management_board_fee_per_m2
-            ? 'Diện tích ' . $managementInfo->area . 'm², thù lao ' . number_format($managementInfo->management_board_fee_per_m2, 0, ',', '.') . 'đ/m²'
-            : 'Không có phí thù lao';
-
-        // Phí gửi xe
-        $parkingFees = DB::table('vehicles as v')
-            ->join('vehicle_types as vt', 'v.vehicle_type_id', '=', 'vt.vehicle_type_id')
-            ->join('apartments as a', 'v.apartment_id', '=', 'a.apartment_id')
-            ->join('building_vehicle_fees as bvf', function ($join) {
-                $join->on('bvf.vehicle_type_id', '=', 'vt.vehicle_type_id')
-                    ->on('bvf.building_id', '=', 'a.building_id');
-            })
-            ->where('v.apartment_id', $apartmentId)
-            ->groupBy('vt.vehicle_type_name', 'bvf.parking_fee')
-            ->selectRaw('
-        vt.vehicle_type_name,
-        COUNT(v.vehicle_id) as vehicle_count,
-        bvf.parking_fee as parking_fee_per_vehicle
-    ')
-            ->get();
-
-        $parkingFeeTotal = 0;
-        $parkingDescriptionParts = [];
-
-        foreach ($parkingFees as $fee) {
-            $amount = 0;
-
-            if ($fee->vehicle_type_name === 'Ô tô') {
-                $firstCarFee = $fee->parking_fee_per_vehicle;
-                $additionalCarFee = $firstCarFee * 1.2;
-
-                if ($fee->vehicle_count == 1) {
-                    $amount = $firstCarFee;
-                } else {
-                    $amount = $firstCarFee + ($fee->vehicle_count - 1) * $additionalCarFee;
-                }
-
-                $parkingDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name} (1 x " . number_format($firstCarFee, 0, ',', '.') . "đ, " . ($fee->vehicle_count - 1) . " x " . number_format($additionalCarFee, 0, ',', '.') . "đ)";
-            } else {
-                $amount = $fee->vehicle_count * $fee->parking_fee_per_vehicle;
-                $parkingDescriptionParts[] = "{$fee->vehicle_count} {$fee->vehicle_type_name}";
-            }
-
-            $parkingFeeTotal += $amount;
-        }
-
-        $parkingDescription = implode(', ', $parkingDescriptionParts);
-
-        // Danh sách phí cố định
-        $fixedFees = [
-            [
-                'type' => 'Phí quản lý vận hành',
-                'amount' => $managementFeeAmount,
-                'description' => $managementDescription,
-            ],
-            [
-                'type' => 'Phí gửi xe',
-                'amount' => $parkingFeeTotal,
-                'description' => $parkingDescription ?: 'Không có phương tiện',
-            ]
-        ];
-
-        if ($managementBoardFeeAmount > 0) {
-            $fixedFees[] = [
-                'type' => 'Thù lao ban quản trị',
-                'amount' => $managementBoardFeeAmount,
-                'description' => $managementBoardDescription,
-            ];
-        }
-
-        // ======= LẤY DƯ NỢ HOẶC DƯ TIỀN TỪ KỲ TRƯỚC =======
-        $carryOverBalances = [];
-
-        // Lấy hóa đơn gần nhất có remaining_balance != 0
-        $latestInvoice = DB::table('invoices')
-            ->where('apartment_id', $apartmentId)
-            ->where('remaining_balance', '!=', 0)
-            ->orderBy('invoice_date', 'desc')
-            ->first(['invoice_date', 'remaining_balance']);
-
-        if ($latestInvoice) {
-            $month = \Carbon\Carbon::parse($latestInvoice->invoice_date)->format('m/Y');
-
-            if ($latestInvoice->remaining_balance > 0) {
-                // Còn nợ
-                $carryOverBalances[] = [
-                    'month' => $month,
-                    'amount' => $latestInvoice->remaining_balance,
-                    'description' => "Nợ tính đến tháng $month: " . number_format($latestInvoice->remaining_balance, 0, ',', '.') . 'đ',
-                ];
-            } else {
-                // Có dư (remaining_balance âm)
-                $surplus = abs($latestInvoice->remaining_balance);
-                $carryOverBalances[] = [
-                    'month' => $month,
-                    'amount' => -$surplus,
-                    'description' => "Dư tính đến tháng $month: " . number_format($surplus, 0, ',', '.') . 'đ',
-                ];
-            }
-        }
-
-        // ======= TRẢ VỀ =======
-        return response()->json([
-            'fixed_fees' => $fixedFees,
-            'carry_over_balances' => $carryOverBalances,
-        ]);
-    }
-
-    public function create(CreateInvoiceRequest $request)
-    {
-        try {
-            DB::beginTransaction();
-            $invoice = $this->invoiceService->create($request->all());
-            DB::commit();
-            return Response::data(['data' => $invoice]);
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            return Response::dataError($e->getCode(), $e->getErrors(), "Lỗi xác thực dữ liệu");
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return Response::dataError($th->getCode() ?: 500, ['general' => [$th->getMessage()]], "Lỗi hệ thống");
-        }
-    }
-
     public function show($id)
     {
         try {
@@ -194,11 +51,17 @@ class InvoiceController extends Controller
         }
     }
 
-    public function update(UpdateInvoiceRequest $request, $id)
+    public function destroy(Request $request)
     {
+        // Validate request
+        $request->validate([
+            'invoice_ids' => 'required|array',
+            'invoice_ids.*' => 'exists:invoices,invoice_id',
+        ]);
+
         try {
             DB::beginTransaction();
-            $invoices = $this->invoiceService->update($request->all(), $id);
+            $invoices = $this->invoiceService->delete($request->invoice_ids);
             DB::commit();
             return Response::data(['data' => $invoices]);
         } catch (\Throwable $th) {
@@ -207,16 +70,249 @@ class InvoiceController extends Controller
         }
     }
 
-    public function destroy($id)
+
+    public function generateMonthlyInvoices(Request $request)
     {
+        $request->validate([
+            'period' => 'required|date_format:Y-m', // VD: 2024-11
+            'building_id' => 'nullable|exists:buildings,building_id'
+        ]);
+
+        $period = $request->period;
+        $buildingId = $request->building_id;
+
         try {
             DB::beginTransaction();
-            $invoices = $this->invoiceService->delete($id);
+
+            // 1. Lấy danh sách căn hộ cần tạo hóa đơn
+            $apartments = DB::table('apartments')
+                ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+                ->get();
+
+
+            $invoicesCreated = 0;
+            $errors = [];
+
+            foreach ($apartments as $apartment) {
+                try {
+                    // Kiểm tra đã tồn tại hóa đơn chưa
+                    $exists = DB::table('invoices')
+                        ->where('apartment_id', $apartment->apartment_id)
+                        ->where('period', $period)
+                        ->exists();
+
+                    if ($exists) {
+                        DB::rollBack(); // Hủy transaction ngay
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Tòa nhà này đã có danh sách hóa đơn tháng {$period}",
+                        ], 400);
+                    }
+
+                    // Tạo hóa đơn
+                    $this->createInvoiceForApartment($apartment, $period);
+                    $invoicesCreated++;
+                } catch (\Exception $e) {
+                    $errors[] = "Lỗi tạo hóa đơn căn hộ {$apartment->apartment_number}: " . $e->getMessage();
+                }
+            }
+
             DB::commit();
-            return Response::data(['data' => $invoices]);
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return Response::dataError($th->getCode(), ['error' => [$th->getMessage()]], $th->getMessage());
+
+            return response()->json([
+                'success' => true,
+                'message' => "Đã tạo {$invoicesCreated} hóa đơn cho tháng {$period}",
+                'data' => [
+                    'invoices_created' => $invoicesCreated,
+                    'total_apartments' => $apartments->count(),
+                    'errors' => $errors
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi tạo hóa đơn: ' . $e->getMessage()
+            ], 500);
         }
+    }
+
+    private function createInvoiceForApartment($apartment, $period)
+    {
+        $issueDate = Carbon::now();
+        $dueDate = $issueDate->copy()->addDays(15);
+
+        $openingBalance = DB::table('apartment_balances')
+        ->where('apartment_id', $apartment->apartment_id)
+        ->value('current_balance') ?? 0;
+        // dd($openingBalance);
+
+        // 1. Tạo hóa đơn master
+        $invoiceId = DB::table('invoices')->insertGetId([
+            'invoice_number' => $this->generateInvoiceNumber($apartment, $period),
+            'apartment_id' => $apartment->apartment_id,
+            'building_id' => $apartment->building_id,
+            'period' => $period,
+            'issue_date' => $issueDate,
+            'due_date' => $dueDate,
+            'opening_balance' => -$openingBalance,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        // 2. Thêm phí quản lý
+        $this->addManagementFee($invoiceId, $apartment);
+
+        // 3. Thêm phí gửi xe
+        $this->addParkingFees($invoiceId, $apartment);
+
+        // 5. Cập nhật tổng tiền
+        $totalAmount = DB::table('invoice_details')
+            ->where('invoice_id', $invoiceId)
+            ->sum('amount');
+
+        DB::table('invoices')
+            ->where('invoice_id', $invoiceId)
+            ->update([
+                'total_amount' => $totalAmount,
+                'closing_balance' => -$openingBalance + $totalAmount,
+                'updated_at' => now()
+            ]);
+
+        $this->balanceService->updateBalance(
+            apartmentId: $apartment->apartment_id,
+            buildingId: $apartment->building_id,
+            amount: $totalAmount,
+            type: 'charge',
+            userId: auth()->id(),
+            description: 'Tạo hóa đơn tháng ' . $period,
+            referenceType: 'invoice',
+            referenceId: $invoiceId
+        );
+
+        return $invoiceId;
+    }
+
+    private function addManagementFee($invoiceId, $apartment)
+    {
+        //Xác định loại căn hộ
+        $apartmentType = $apartment->apartment_type;
+
+        //Tìm phí quản lý tương ứng loại căn hộ
+        $managementFee = DB::table('building_fees as bf')
+            ->join('fee_types as ft', 'bf.fee_types_id', '=', 'ft.fee_types_id')
+            ->join('fee_subtypes as fs', 'bf.fee_subtypes_id', '=', 'fs.fee_subtypes_id')
+            ->where('bf.building_id', $apartment->building_id)
+            ->where('ft.code', 'FEE_MANAGEMENT')
+            ->where(function ($query) use ($apartmentType) {
+                $query->where('fs.code', $apartmentType)
+                    ->orWhereNull('fs.code');
+            })
+            ->where('bf.effective_from', '<=', now())
+            ->orderBy('fs.code', $apartmentType ? 'desc' : 'asc')
+            ->orderBy('bf.effective_from', 'desc')
+            ->select('bf.*', 'fs.name as subtype_name', 'fs.code as subtype_code')
+            ->first();
+
+        if (!$managementFee) {
+            return;
+        }
+
+        //Lấy diện tích căn hộ để tính phí
+        $apartmentArea = DB::table('apartments')
+            ->where('apartment_id', $apartment->apartment_id)
+            ->value('area') ?? 0;
+
+        //Tính tổng tiền
+        $quantity = $apartmentArea;
+        $unitPrice = $managementFee->price;
+        $amount = $quantity * $unitPrice;
+
+        //Lưu chi tiết hóa đơn
+        DB::table('invoice_details')->insert([
+            'invoice_id' => $invoiceId,
+            'fee_types_id' => $managementFee->fee_types_id,
+            'fee_subtypes_id' => $managementFee->fee_subtypes_id,
+            'building_fee_id' => $managementFee->building_fee_id,
+            'description' => "Phí quản lý căn hộ loại {$managementFee->subtype_name} ({$quantity}m²)",
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'amount' => $amount,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addParkingFees($invoiceId, $apartment)
+    {
+        // Lấy danh sách xe đang active của căn hộ
+        $vehicles = DB::table('vehicles as v')
+            ->join('vehicle_types as pvt', 'v.vehicle_type_id', '=', 'pvt.vehicle_type_id')
+            ->join('residents as re', 'v.resident_id', '=', 're.resident_id')
+            ->where('v.apartment_number', $apartment->apartment_number)
+            ->where('v.status', 0)
+            ->select('v.*', 'pvt.name as vehicle_type_name', 'pvt.code as vehicle_type_code', 're.full_name as owner_name')
+            ->get();
+
+        foreach ($vehicles as $vehicle) {
+            // Tìm phí gửi xe tương ứng (theo code của vehicle_type)
+            $parkingFee = DB::table('building_fees as bf')
+                ->join('fee_types as ft', 'bf.fee_types_id', '=', 'ft.fee_types_id')
+                ->join('fee_subtypes as fs', 'bf.fee_subtypes_id', '=', 'fs.fee_subtypes_id')
+                ->where('bf.building_id', $apartment->building_id)
+                ->where('ft.code', 'FEE_PARKING')
+                ->where('fs.code', $vehicle->vehicle_type_code)
+                ->where('bf.effective_from', '<=', now())
+                ->orderBy('bf.effective_from', 'desc')
+                ->first();
+
+            if (!$parkingFee) {
+                continue;
+            }
+
+            DB::table('invoice_details')->insert([
+                'invoice_id' => $invoiceId,
+                'fee_types_id' => $parkingFee->fee_types_id,
+                'fee_subtypes_id' => $parkingFee->fee_subtypes_id,
+                'building_fee_id' => $parkingFee->building_fee_id,
+                'reference_id' => $vehicle->vehicle_id,
+                'reference_type' => 'vehicle',
+                'description' => "{$vehicle->vehicle_type_name} - {$vehicle->license_plate} - {$apartment->apartment_number} ({$vehicle->owner_name})",
+                'quantity' => 1,
+                'unit_price' => $parkingFee->price,
+                'amount' => $parkingFee->price,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+    }
+
+    private function generateInvoiceNumber($apartment, $period)
+    {
+        // Format: INV-202411-A101
+        $periodFormatted = str_replace('-', '', $period);
+        return "INV-{$periodFormatted}-{$apartment->apartment_number}";
+    }
+
+    private function updateInvoiceTotal($invoiceId)
+    {
+        $total = DB::table('invoice_details')
+            ->where('invoice_id', $invoiceId)
+            ->sum('amount');
+
+        // Trừ đi các khoản điều chỉnh (nếu có)
+        // $adjustments = DB::table('invoice_adjustments')
+        //     ->where('invoice_id', $invoiceId)
+        //     ->sum('amount');
+
+        // $finalTotal = $total + $adjustments;
+
+        DB::table('invoices')
+            ->where('invoice_id', $invoiceId)
+            ->update([
+                'total_amount' => $total,
+                'updated_at' => now()
+            ]);
     }
 }
