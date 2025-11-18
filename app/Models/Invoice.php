@@ -23,7 +23,11 @@ class Invoice extends Model
         'total_amount',
         'paid_amount',
         'opening_balance',
-        'closing_balance'
+        'closing_balance',
+        'adjustment_total',
+        'adjustment_count',
+        'last_adjusted_at',
+        'last_adjusted_by'
     ];
 
     public function invoiceDetails()
@@ -49,5 +53,10 @@ class Invoice extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function adjustments()
+    {
+        return $this->hasMany(InvoiceAdjustment::class, 'invoice_id', 'invoice_id');
     }
 }
