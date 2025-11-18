@@ -23,6 +23,7 @@ use App\Http\Controllers\ApiAdmin\ShiftController;
 use App\Http\Controllers\ApiAdmin\FeeSubtypeController;
 use App\Http\Controllers\ApiAdmin\BuildingFeeController;
 use App\Http\Controllers\ApiAdmin\UtilityController;
+use App\Http\Controllers\ApiAdmin\InvoiceAdjustmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -169,6 +170,12 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('calculate-and-bill', [UtilityController::class, 'calculateAndBill']);
             Route::get('template', [UtilityController::class, 'downloadTemplate']);
         });
+
+        //InvoiceAdjustment
+        Route::prefix('invoice-adjustment')->group(function () {
+            Route::post('/create', [InvoiceAdjustmentController::class, 'createAdjustment']);
+        });
+
     });
 
     Route::group(['middleware' => 'auth_admin', 'cors'], function () {
@@ -220,10 +227,16 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/subtypes/{id}', [FeeSubtypeController::class, 'getByFeeTypeId']);
         });
 
-        //fee_building (admin)
+        //fee_building
         Route::group(['prefix' => 'building-fee'], function () {
             Route::post('/fee', [BuildingFeeController::class, 'store']);
             Route::put('/fee/{id}', [BuildingFeeController::class, 'update']);
+        });
+
+        //InvoiceAdjustment
+        Route::prefix('invoice-adjustment')->group(function () {
+            Route::post('/approve/{id}', [InvoiceAdjustmentController::class, 'approveAdjustment']);
+            Route::post('/reject', [InvoiceAdjustmentController::class, 'rejectAdjustment']);
         });
     });
 
